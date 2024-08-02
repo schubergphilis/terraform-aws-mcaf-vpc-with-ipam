@@ -230,9 +230,9 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
   provider = aws.transit_gateway_account
   count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
-  transit_gateway_attachment_id = aws_ec2_transit_gateway_vpc_attachment.default[0].id
+  transit_gateway_attachment_id = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
   tags                          = var.tags
-  depends_on                    = [aws_ec2_transit_gateway_vpc_attachment.default[0]]
+  depends_on                    = [aws_ec2_transit_gateway_vpc_attachment.default]
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "default" {
