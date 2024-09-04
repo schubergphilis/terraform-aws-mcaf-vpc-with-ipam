@@ -224,14 +224,38 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "default" {
   transit_gateway_id                              = var.transit_gateway_id
   vpc_id                                          = aws_vpc.default.id
   tags                                            = { Name = var.name }
+
+  lifecycle {
+    ignore_changes = [
+      transit_gateway_default_route_table_association, transit_gateway_default_route_table_propagation
+    ]
+  }
+}
+
+resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
+  provider = aws.transit_gateway_account
+  count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
+
+  transit_gateway_attachment_id                   = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
+  transit_gateway_default_route_table_propagation = true
+  tags                                            = var.tags
+  depends_on                                      = [aws_ec2_transit_gateway_vpc_attachment.default[0]]
+
+  lifecycle {
+    ignore_changes = [
+      transit_gateway_default_route_table_association, transit_gateway_default_route_table_propagation
+    ]
+  }
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "default" {
   provider = aws.transit_gateway_account
   count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
   transit_gateway_route_table_id = var.transit_gateway_route_table_association
+
+  depends_on = [ aws_ec2_transit_gateway_vpc_attachment_accepter.default ]
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
@@ -240,4 +264,23 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
 
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
   transit_gateway_route_table_id = each.value
+
+  depends_on = [ aws_ec2_transit_gateway_vpc_attachment_accepter.default ]
+}
+
+resource "route" "default" {
+  for_each = { for subnet in local.vpc_subnets : subnet.key => subnet if subnet.private }
+
+  route_table_id         = aws_route_table.default[each.key].id
+  destination_cidr_block = "0.0.0.0/0"
+  transit_gateway_id     = var.transit_gateway_id
+}
+
+resource "aws_vpc_endpoint" "default" {
+  count             = var.s3_gateway_endpoint ? 1 : 0
+
+  service_name      = "com.amazonaws.eu-central-1.s3"
+  vpc_endpoint_type = "Gateway"
+  vpc_id            = aws_vpc.default.id
+  route_table_ids   = [for subnet in local.vpc_subnets : aws_subnet.default[subnet.key].id if subnet.private]
 }

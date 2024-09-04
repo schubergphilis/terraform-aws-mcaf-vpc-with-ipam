@@ -51,10 +51,16 @@ variable "networks" {
   description = "A list of objects describing requested subnetwork prefixes."
 }
 
+variable "s3_gateway_endpoint" {
+  type        = boolean
+  default     = false
+  description = "A map of tags to add to all resources."
+}
+
 variable "tags" {
   type        = map(string)
   default     = {}
-  description = "A map of tags to add to all resources."
+  description = "Deploy an S3 Gateway endpoint in the VPC"
 }
 
 variable "transit_gateway_appliance_mode_support" {
