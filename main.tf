@@ -268,7 +268,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
   depends_on = [ aws_ec2_transit_gateway_vpc_attachment_accepter.default ]
 }
 
-resource "route" "default" {
+resource "aws_route" "default" {
   for_each = { for subnet in local.vpc_subnets : subnet.key => subnet if subnet.private }
 
   route_table_id         = aws_route_table.default[each.key].id
