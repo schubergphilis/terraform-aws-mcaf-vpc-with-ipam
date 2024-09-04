@@ -52,7 +52,7 @@ variable "networks" {
 }
 
 variable "s3_gateway_endpoint" {
-  type        = boolean
+  type        = bool
   default     = false
   description = "A map of tags to add to all resources."
 }
