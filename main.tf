@@ -237,8 +237,9 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
   count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
   transit_gateway_attachment_id                   = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
+  transit_gateway_default_route_table_association = false
   transit_gateway_default_route_table_propagation = false
-  tags                                            = var.tags
+  tags                                            = merge(var.tags, { Name = each.key })
   depends_on                                      = [aws_ec2_transit_gateway_vpc_attachment.default[0]]
 
 }
