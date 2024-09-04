@@ -252,10 +252,10 @@ resource "aws_ec2_transit_gateway_route_table_association" "default" {
   provider = aws.transit_gateway_account
   count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
   transit_gateway_route_table_id = var.transit_gateway_route_table_association
 
-  depends_on = [ aws_ec2_transit_gateway_vpc_attachment_accepter.default ]
+  depends_on = [aws_ec2_transit_gateway_vpc_attachment_accepter.default]
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
@@ -265,6 +265,6 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
   transit_gateway_route_table_id = each.value
 
-  depends_on = [ aws_ec2_transit_gateway_vpc_attachment_accepter.default ]
+  depends_on = [aws_ec2_transit_gateway_vpc_attachment_accepter.default]
 }
 
