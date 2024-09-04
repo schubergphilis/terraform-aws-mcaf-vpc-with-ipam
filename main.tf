@@ -237,15 +237,10 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
   count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
   transit_gateway_attachment_id                   = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
-  transit_gateway_default_route_table_propagation = true
+  transit_gateway_default_route_table_propagation = false
   tags                                            = var.tags
   depends_on                                      = [aws_ec2_transit_gateway_vpc_attachment.default[0]]
 
-  lifecycle {
-    ignore_changes = [
-      transit_gateway_default_route_table_association, transit_gateway_default_route_table_propagation
-    ]
-  }
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "default" {
