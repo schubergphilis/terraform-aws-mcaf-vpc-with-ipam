@@ -7,8 +7,5 @@ terraform {
       version               = ">= 5.20"
       configuration_aliases = [aws.transit_gateway_account]
     }
-    route = {
-      
-    }
   }
 }
