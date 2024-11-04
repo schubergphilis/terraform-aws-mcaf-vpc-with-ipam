@@ -240,6 +240,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
   transit_gateway_default_route_table_association = false
   transit_gateway_default_route_table_propagation = false
   tags                                            = var.tags
+
+  depends_on                                      = [aws_ec2_transit_gateway_vpc_attachment.default[0]]
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "default" {
