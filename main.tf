@@ -80,6 +80,7 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
 resource "aws_iam_role" "vpc_flow_logs" {
   name_prefix        = var.cloudwatch_flow_logs_configuration.iam_role_name_prefix
   assume_role_policy = data.aws_iam_policy_document.vpc_flow_logs_assume_role.json
+  path               = var.cloudwatch_flow_logs_configuration.iam_path
 }
 
 data "aws_iam_policy_document" "vpc_flow_logs_assume_role" {
@@ -103,6 +104,7 @@ resource "aws_iam_role_policy_attachment" "vpc_flow_logs" {
 
 resource "aws_iam_policy" "vpc_flow_logs" {
   name_prefix = var.cloudwatch_flow_logs_configuration.iam_policy_name_prefix
+  path        = var.cloudwatch_flow_logs_configuration.iam_path
   policy      = data.aws_iam_policy_document.vpc_flow_log.json
 }
 

@@ -10,6 +10,7 @@ variable "aws_vpc_ipam_pool" {
 
 variable "cloudwatch_flow_logs_configuration" {
   type = object({
+    iam_path                 = optional(string, "/")
     iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")
     iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")
     kms_key_arn              = optional(string)
