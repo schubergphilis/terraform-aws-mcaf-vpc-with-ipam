@@ -49,8 +49,8 @@ module "hub_vpc_endpoints" {
   endpoints                  = local.endpoints_map
   security_group_description = "VPC endpoint security group"
   security_group_name_prefix = "hub-vpc-endpoints-"
-  subnet_ids                 = module.vpc.subnet_ids["private"]
-  vpc_id                     = module.vpc.vpc_id
+  subnet_ids                 = module.hub_vpc.subnet_ids["private"]
+  vpc_id                     = module.hub_vpc.vpc_id
 
   security_group_ingress_rules = {
     spoke_vpcs = {

@@ -23,9 +23,9 @@ variable "endpoints" {
     }))
 
     private_link_dns_options = optional(object({
-      dns_record_ttl  = optional(string, "300")
+      dns_record_ttl  = optional(number, 300)
       dns_record_type = optional(string, "CNAME")
-      dns_records     = optional(list(string))
+      dns_records     = optional(list(string), [])
       dns_zone        = string
     }))
   }))
@@ -91,16 +91,6 @@ variable "vpc_id" {
   description = "The ID of the VPC in which the endpoint will be used"
   type        = string
   default     = null
-}
-
-variable "enable_centralized_endpoints" {
-  type        = bool
-  default     = false
-  description = <<EOT
-When enabled, interface endpoints are created with private_dns_enabled = false,
-and this module sets up a dedicated private Route 53 hosted zone and A-records.
-This facilitates a hub-and-spoke architecture for centralized endpoint access.
-EOT
 }
 
 ################################################################################

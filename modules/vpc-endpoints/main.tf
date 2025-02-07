@@ -1,7 +1,53 @@
 locals {
-  centralized_endpoints = { for key, endpoint in var.endpoints : key => endpoint if endpoint.centralized_endpoints }
+  centralized_endpoints = { for key, endpoint in var.endpoints : key => endpoint if endpoint.centralized_endpoint }
   create_security_group = var.security_group_name != null || var.security_group_name_prefix != null
   security_group_ids    = local.create_security_group ? concat(var.security_group_ids, [aws_security_group.default[0].id]) : var.security_group_ids
+
+  # Create a custom dns zone for endpoints that are either:
+  # - "centralized_endpoint = true" and have no custom dns_zone set. 
+  #   In this case the reversed reversed service_full_name or data source is used: e.g. “com.amazonaws.eu-central-1.sts” to “sts.eu-central-1.amazonaws.com”
+  # - have a "private_link_dns_options.dns_zone" defined
+  endpoints_custom_zones = {
+    for key, endpoint in var.endpoints : key => {
+      zone_name = try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(
+        ".", reverse(split(".", endpoint.service_full_name != null ? endpoint.service_full_name : data.aws_vpc_endpoint_service.default[key].service_name))
+      )
+    } if endpoint.centralized_endpoint == true || try(endpoint.private_link_dns_options.dns_zone != null, null)
+  }
+
+  endpoints_custom_records = flatten([
+    for key, endpoint in var.endpoints :
+
+    # 1) CENTRALIZED => If `centralized_endpoint = true` AND no custom dns_zone. Create alias apex + wildcard record.
+    endpoint.centralized_endpoint == true && length(coalesce(endpoint.private_link_dns_options.dns_records, [])) == 0 ? [
+      {
+        alias       = true
+        record_name = ""
+        record_type = "A"
+        zone        = key
+      },
+      {
+        alias       = true
+        record_name = "*"
+        record_type = "A"
+        zone        = key
+      }
+    ]
+
+    # 2) CUSTOM ZONE => If `private_link_dns_options.dns_zone` is set => create one record for each name in `dns_records`
+    : length(coalesce(endpoint.private_link_dns_options.dns_records, [])) > 0 ? [
+      for record in endpoint.private_link_dns_options.dns_records : {
+        alias       = false
+        record_name = record
+        record_ttl  = endpoint.private_link_dns_options.dns_record_ttl
+        record_type = endpoint.private_link_dns_options.dns_record_type
+        zone        = endpoint.private_link_dns_options.dns_zone
+      }
+    ]
+
+    # 3) NEITHER => no records at all
+    : []
+  ])
 }
 
 data "aws_region" "current" {}
@@ -28,7 +74,7 @@ resource "aws_vpc_endpoint" "default" {
   auto_accept         = each.value.auto_accept
   ip_address_type     = each.value.ip_address_type
   policy              = each.value.policy
-  private_dns_enabled = each.value.centralized_endpoint ? false : each.value.private_dns_enabled
+  private_dns_enabled = each.value.centralized_endpoint == true || try(each.value.private_link_dns_options.dns_zone != null, null) ? false : each.value.private_dns_enabled
   route_table_ids     = each.value.route_table_ids
   service_name        = each.value.service_full_name != null ? each.value.service_full_name : data.aws_vpc_endpoint_service.default[each.key].service_name # If user explicitly provides a service endpoint, use it. Otherwise, use the discovered service_name.
   service_region      = each.value.service_region
@@ -71,26 +117,18 @@ resource "aws_vpc_endpoint" "default" {
 }
 
 ########################################################################
-# Centralized DNS Zone & Records
+# Custom DNS Zone & Records
 ########################################################################
 
 // the terraform-aws-mcaf-route53-zones is not used due to the lifecycle ignore_changes = [vpc]
-resource "aws_route53_zone" "centralized_endpoint_dns_zone" {
+resource "aws_route53_zone" "endpoint_custom_zone" {
   #checkov:skip=CKV2_AWS_39: "Ensure Domain Name System (DNS) query logging is enabled for Amazon Route 53 hosted zones" - Non centralized vpc endpoint zones are also not logged by AWS.
   #checkov:skip=CKV2_AWS_38: "Ensure Domain Name System Security Extensions (DNSSEC) signing is enabled for Amazon Route 53 public hosted zones" - N/A for VPC Endpoints.
-  for_each = local.centralized_endpoints
+  for_each = local.endpoints_custom_zones
 
+  name          = each.value.zone_name
   force_destroy = false
   tags          = var.tags
-
-  // service_name = “com.amazonaws.eu-central-1.sts” to “sts.eu-central-1.amazonaws.com”
-  name = join(".", reverse(split(".",
-    each.value.service_full_name != null
-    ? each.value.service_full_name
-    : data.aws_vpc_endpoint_service.default[each.key].service_name
-    )
-    )
-  )
 
   vpc {
     vpc_id     = var.vpc_id
@@ -104,31 +142,26 @@ resource "aws_route53_zone" "centralized_endpoint_dns_zone" {
   }
 }
 
-resource "aws_route53_record" "centralized_endpoint_dns_alias" {
-  for_each = local.centralized_endpoints
+resource "aws_route53_record" "endpoint_dns_records" {
+  for_each = { for record in local.endpoints_custom_records : "${record.zone}-${record.record_name}" => record }
 
-  zone_id = aws_route53_zone.centralized_endpoint_dns_zone[each.key].zone_id
-  name    = "" # apex of the zone
-  type    = "A"
+  name    = each.value.record_name
+  type    = each.value.record_type
+  zone_id = aws_route53_zone.endpoint_custom_zone[each.value.zone].zone_id
 
-  alias {
-    name                   = aws_vpc_endpoint.default[each.key].dns_entry[0].dns_name
-    zone_id                = aws_vpc_endpoint.default[each.key].dns_entry[0].hosted_zone_id
-    evaluate_target_health = true
-  }
-}
+  # If alias is true, do not set ttl/records; if alias is false, they must be set.
+  ttl     = each.value.alias ? null : each.value.record_ttl
+  records = each.value.alias ? null : [aws_vpc_endpoint.default[each.value.zone].dns_entry[0].dns_name]
 
-resource "aws_route53_record" "centralized_endpoint_dns_wildcard" {
-  for_each = local.centralized_endpoints
 
-  zone_id = aws_route53_zone.centralized_endpoint_dns_zone[each.key].zone_id
-  name    = "*"
-  type    = "A"
+  dynamic "alias" {
+    for_each = each.value.alias ? { create : true } : {}
 
-  alias {
-    name                   = aws_vpc_endpoint.default[each.key].dns_entry[0].dns_name
-    zone_id                = aws_vpc_endpoint.default[each.key].dns_entry[0].hosted_zone_id
-    evaluate_target_health = true
+    content {
+      evaluate_target_health = true
+      name                   = aws_vpc_endpoint.default[each.value.zone].dns_entry[0].dns_name
+      zone_id                = aws_vpc_endpoint.default[each.value.zone].dns_entry[0].hosted_zone_id
+    }
   }
 }
 

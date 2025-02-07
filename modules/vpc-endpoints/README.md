@@ -7,7 +7,7 @@ The module supports two primary use cases:
 1. **Single-VPC Deployment**: Add endpoints directly into a single VPC.
 2. [**Centralized (Hub-and-Spoke) Deployment**](https://aws.amazon.com/blogs/networking-and-content-delivery/centralize-access-using-vpc-interface-endpoints/): Provision interface endpoints in a “hub” VPC and expose them to other “spoke” VPCs using VPC peering or an AWS Transit Gateway, enabling private DNS resolution across multiple VPCs. This model can reduce operational overhead and costs by minimizing the number of endpoints.
 
-Both use cases support the aws service vpc endpoints and custom private link endpoints. 
+Both use cases support the AWS Service VPC Endpoints and custom Private Link endpoints. 
 
 ## Usage
 
