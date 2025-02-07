@@ -2,7 +2,7 @@ locals {
   create_security_group = var.security_group_name != null || var.security_group_name_prefix != null
   security_group_ids    = local.create_security_group ? concat(var.security_group_ids, [aws_security_group.default[0].id]) : var.security_group_ids
 
-  # Produces a map of endpoint keys to an object containing the zone_name. Each entry represents
+  # Produces a map of endpoint keys to an object containing the zone_name & service_region. Each entry represents
   # a custom hosted zone that we want to create. We only include endpoints when either:
   #   1) The endpoint has centralized_endpoint = true (no explicit dns_zone set). In that case,
   #      we derive a zone_name from reversing the service name (e.g., "com.amazonaws.eu-central-1.sts"
@@ -14,6 +14,7 @@ locals {
       zone_name = try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(
         ".", reverse(split(".", endpoint.service_full_name != null ? endpoint.service_full_name : data.aws_vpc_endpoint_service.default[key].service_name))
       )
+      service_region = endpoint.service_region
     } if endpoint.centralized_endpoint == true || try(endpoint.private_link_dns_options.dns_zone != null, false)
   }
 
