@@ -26,12 +26,14 @@ locals {
     endpoint.centralized_endpoint == true && length(try(endpoint.private_link_dns_options.dns_records, [])) == 0 ? [
       {
         alias       = true
+        endpoint    = key
         record_name = ""
         record_type = "A"
         zone        = key
       },
       {
         alias       = true
+        endpoint    = key
         record_name = "*"
         record_type = "A"
         zone        = key
@@ -42,6 +44,7 @@ locals {
     : length(try(endpoint.private_link_dns_options.dns_records, [])) > 0 ? [
       for record in endpoint.private_link_dns_options.dns_records : {
         alias       = false
+        endpoint    = key
         record_name = record
         record_ttl  = endpoint.private_link_dns_options.dns_record_ttl
         record_type = endpoint.private_link_dns_options.dns_record_type
@@ -152,20 +155,19 @@ resource "aws_route53_record" "endpoint_dns_records" {
 
   name    = each.value.record_name
   type    = each.value.record_type
-  zone_id = aws_route53_zone.endpoint_custom_zone[each.value.zone].zone_id
+  zone_id = aws_route53_zone.endpoint_custom_zone[each.value.endpoint].zone_id
 
   # If alias is true, do not set ttl/records; if alias is false, they must be set.
   ttl     = each.value.alias ? null : each.value.record_ttl
-  records = each.value.alias ? null : [aws_vpc_endpoint.default[each.value.zone].dns_entry[0].dns_name]
-
+  records = each.value.alias ? null : [aws_vpc_endpoint.default[each.value.endpoint].dns_entry[0].dns_name]
 
   dynamic "alias" {
     for_each = each.value.alias ? { create : true } : {}
 
     content {
       evaluate_target_health = true
-      name                   = aws_vpc_endpoint.default[each.value.zone].dns_entry[0].dns_name
-      zone_id                = aws_vpc_endpoint.default[each.value.zone].dns_entry[0].hosted_zone_id
+      name                   = aws_vpc_endpoint.default[each.value.endpoint].dns_entry[0].dns_name
+      zone_id                = aws_vpc_endpoint.default[each.value.endpoint].dns_entry[0].hosted_zone_id
     }
   }
 }
