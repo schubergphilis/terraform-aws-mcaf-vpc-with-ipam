@@ -44,22 +44,25 @@ module "vpc_endpoints" {
 
   endpoints = {
     s3 = {
-      service = "s3"
+      service             = "s3"
+      private_dns_enabled = true
       dns_options = {
         private_dns_only_for_inbound_resolver_endpoint = false
       }
     },
     dynamodb = {
-      service         = "dynamodb"
-      service_type    = "Gateway"
-      route_table_ids = module.vpc.route_table_ids["private"]
       policy          = data.aws_iam_policy_document.dynamodb_endpoint_policy.json
+      route_table_ids = module.vpc.route_table_ids["private"]
+      service         = "dynamodb"
+      type            = "Gateway"
     },
     ecs = {
-      service = "ecs"
+      service             = "ecs"
+      private_dns_enabled = true
     },
     ecr_api = {
-      service = "ecr.api"
+      service             = "ecr.api"
+      private_dns_enabled = true
     }
   }
 }

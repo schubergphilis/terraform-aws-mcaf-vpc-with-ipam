@@ -7,8 +7,8 @@ variable "endpoints" {
     auto_accept          = optional(bool)
     ip_address_type      = optional(string)
     policy               = optional(string)
-    private_dns_enabled  = optional(bool, true)
-    centralized_endpoint = optional(bool, false) #When enabled, private_dns_enabled is overridden to `false`, and resources are created to facilitate a hub-and-spoke architecture for centralized endpoint access.
+    private_dns_enabled  = optional(bool)
+    centralized_endpoint = optional(bool, false)
     route_table_ids      = optional(list(string))
     security_group_ids   = optional(list(string), [])
     service              = optional(string) #e.g. s3
