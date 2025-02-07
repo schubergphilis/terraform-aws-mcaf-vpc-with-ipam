@@ -4,21 +4,29 @@
 
 variable "endpoints" {
   type = map(object({
-    auto_accept         = optional(bool)
-    ip_address_type     = optional(string)
-    policy              = optional(string)
-    private_dns_enabled = optional(bool, true)
-    route_table_ids     = optional(list(string))
-    security_group_ids  = optional(list(string), [])
-    service             = optional(string) #e.g. s3
-    service_full_name   = optional(string) #e.g. com.amazonaws.eu-west-1.s3
-    service_region      = optional(string)
-    type                = optional(string, "Interface")
-    subnet_ids          = optional(list(string), [])
+    auto_accept          = optional(bool)
+    ip_address_type      = optional(string)
+    policy               = optional(string)
+    private_dns_enabled  = optional(bool, true)
+    centralized_endpoint = optional(bool, false) #When enabled, private_dns_enabled is overridden to `false`, and resources are created to facilitate a hub-and-spoke architecture for centralized endpoint access.
+    route_table_ids      = optional(list(string))
+    security_group_ids   = optional(list(string), [])
+    service              = optional(string) #e.g. s3
+    service_full_name    = optional(string) #e.g. com.amazonaws.eu-west-1.s3
+    service_region       = optional(string)
+    type                 = optional(string, "Interface")
+    subnet_ids           = optional(list(string), [])
 
     dns_options = optional(object({
       dns_record_ip_type                             = optional(string)
       private_dns_only_for_inbound_resolver_endpoint = optional(bool)
+    }))
+
+    private_link_dns_options = optional(object({
+      dns_record_ttl  = optional(string, "300")
+      dns_record_type = optional(string, "CNAME")
+      dns_records     = optional(list(string))
+      dns_zone        = string
     }))
   }))
 
@@ -38,6 +46,11 @@ variable "endpoints" {
   validation {
     condition     = alltrue([for endpoint in values(var.endpoints) : length(coalesce(endpoint.route_table_ids, [])) == 0 || endpoint.type == "Gateway"])
     error_message = "For each endpoint, 'route_table_ids' can only be defined if 'type' is Gateway."
+  }
+
+  validation {
+    condition     = alltrue([for endpoint in values(var.endpoints) : endpoint.centralized_endpoint != true || endpoint.type == "Interface"])
+    error_message = "For each endpoint, 'centralized_endpoint' can only be true if 'type' is Interface."
   }
 
   validation {

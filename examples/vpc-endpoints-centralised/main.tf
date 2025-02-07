@@ -7,7 +7,10 @@ locals {
     "ecr.dkr",
   ]
 
-  endpoints_map = { for endpoint in local.endpoints : endpoint => { service = endpoint }
+  endpoints_map = { for endpoint in local.endpoints : endpoint => {
+    centralized_endpoint = true
+    service              = endpoint
+    }
   }
 }
 
@@ -43,12 +46,11 @@ module "hub_vpc" {
 module "hub_vpc_endpoints" {
   source = "../../modules/vpc-endpoints"
 
-  enable_centralized_endpoints = true
-  endpoints                    = local.endpoints_map
-  security_group_description   = "VPC endpoint security group"
-  security_group_name_prefix   = "hub-vpc-endpoints-"
-  subnet_ids                   = module.vpc.subnet_ids["private"]
-  vpc_id                       = module.vpc.vpc_id
+  endpoints                  = local.endpoints_map
+  security_group_description = "VPC endpoint security group"
+  security_group_name_prefix = "hub-vpc-endpoints-"
+  subnet_ids                 = module.vpc.subnet_ids["private"]
+  vpc_id                     = module.vpc.vpc_id
 
   security_group_ingress_rules = {
     spoke_vpcs = {

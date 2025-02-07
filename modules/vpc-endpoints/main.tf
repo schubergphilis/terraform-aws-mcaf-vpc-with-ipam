@@ -1,11 +1,7 @@
 locals {
+  centralized_endpoints = { for key, endpoint in var.endpoints : key => endpoint if endpoint.centralized_endpoints }
   create_security_group = var.security_group_name != null || var.security_group_name_prefix != null
   security_group_ids    = local.create_security_group ? concat(var.security_group_ids, [aws_security_group.default[0].id]) : var.security_group_ids
-
-  centralized_endpoints = {
-    for key, endpoint in var.endpoints : key => endpoint
-    if var.enable_centralized_endpoints && endpoint.type == "Interface"
-  }
 }
 
 data "aws_region" "current" {}
@@ -32,7 +28,7 @@ resource "aws_vpc_endpoint" "default" {
   auto_accept         = each.value.auto_accept
   ip_address_type     = each.value.ip_address_type
   policy              = each.value.policy
-  private_dns_enabled = var.enable_centralized_endpoints ? false : each.value.private_dns_enabled
+  private_dns_enabled = each.value.centralized_endpoint ? false : each.value.private_dns_enabled
   route_table_ids     = each.value.route_table_ids
   service_name        = each.value.service_full_name != null ? each.value.service_full_name : data.aws_vpc_endpoint_service.default[each.key].service_name # If user explicitly provides a service endpoint, use it. Otherwise, use the discovered service_name.
   service_region      = each.value.service_region
@@ -78,12 +74,14 @@ resource "aws_vpc_endpoint" "default" {
 # Centralized DNS Zone & Records
 ########################################################################
 
+// the terraform-aws-mcaf-route53-zones is not used due to the lifecycle ignore_changes = [vpc]
 resource "aws_route53_zone" "centralized_endpoint_dns_zone" {
   #checkov:skip=CKV2_AWS_39: "Ensure Domain Name System (DNS) query logging is enabled for Amazon Route 53 hosted zones" - Non centralized vpc endpoint zones are also not logged by AWS.
   #checkov:skip=CKV2_AWS_38: "Ensure Domain Name System Security Extensions (DNSSEC) signing is enabled for Amazon Route 53 public hosted zones" - N/A for VPC Endpoints.
   for_each = local.centralized_endpoints
 
   force_destroy = false
+  tags          = var.tags
 
   // service_name = “com.amazonaws.eu-central-1.sts” to “sts.eu-central-1.amazonaws.com”
   name = join(".", reverse(split(".",
