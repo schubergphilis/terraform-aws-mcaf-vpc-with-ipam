@@ -57,7 +57,8 @@ locals {
 data "aws_region" "current" {}
 
 data "aws_vpc_endpoint_service" "default" {
-  for_each = var.endpoints
+  # Filter out endpoints that already define service_full_name
+  for_each = { for k, v in var.endpoints : k => v if v.service_full_name == null }
 
   service         = each.value.service
   service_regions = each.value.service_region != null ? [each.value.service_region] : []
