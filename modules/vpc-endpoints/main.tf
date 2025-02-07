@@ -1,20 +1,23 @@
 locals {
-  centralized_endpoints = { for key, endpoint in var.endpoints : key => endpoint if endpoint.centralized_endpoint }
   create_security_group = var.security_group_name != null || var.security_group_name_prefix != null
   security_group_ids    = local.create_security_group ? concat(var.security_group_ids, [aws_security_group.default[0].id]) : var.security_group_ids
 
-  # Create a custom dns zone for endpoints that are either:
-  # - "centralized_endpoint = true" and have no custom dns_zone set. 
-  #   In this case the reversed reversed service_full_name or data source is used: e.g. “com.amazonaws.eu-central-1.sts” to “sts.eu-central-1.amazonaws.com”
-  # - have a "private_link_dns_options.dns_zone" defined
+  # Produces a map of endpoint keys to an object containing the zone_name. Each entry represents
+  # a custom hosted zone that we want to create. We only include endpoints when either:
+  #   1) The endpoint has centralized_endpoint = true (no explicit dns_zone set). In that case,
+  #      we derive a zone_name from reversing the service name (e.g., "com.amazonaws.eu-central-1.sts"
+  #      becomes "sts.eu-central-1.amazonaws.com").
+  #   2) The endpoint explicitly provides private_link_dns_options.dns_zone.
   endpoints_custom_zones = {
-    for key, endpoint in var.endpoints : key => {
+    for key, endpoint in var.endpoints :
+    key => {
       zone_name = try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(
         ".", reverse(split(".", endpoint.service_full_name != null ? endpoint.service_full_name : data.aws_vpc_endpoint_service.default[key].service_name))
       )
     } if endpoint.centralized_endpoint == true || try(endpoint.private_link_dns_options.dns_zone != null, null)
   }
 
+  # Produces a list of Route53 record definitions for each endpoint.
   endpoints_custom_records = flatten([
     for key, endpoint in var.endpoints :
 

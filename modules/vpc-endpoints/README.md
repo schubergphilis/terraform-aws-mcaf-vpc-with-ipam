@@ -9,13 +9,6 @@ The module supports two primary use cases:
 
 Both use cases support the AWS Service VPC Endpoints and custom Private Link endpoints. 
 
-## Usage
-
-See examples directory.
-
-<!-- BEGIN_TF_DOCS -->
-
-<!-- END_TF_DOCS -->
 
 ## License
 
