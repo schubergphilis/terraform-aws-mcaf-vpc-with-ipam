@@ -65,9 +65,9 @@ variable "endpoints" {
 }
 
 variable "subnet_ids" {
-  description = "Default subnets IDs to associate with all VPC endpoints"
   type        = list(string)
   default     = []
+  description = "Default subnets IDs to associate with all VPC endpoints"
 }
 
 variable "tags" {
@@ -88,9 +88,9 @@ variable "timeouts" {
 }
 
 variable "vpc_id" {
-  description = "The ID of the VPC in which the endpoint will be used"
   type        = string
   default     = null
+  description = "The ID of the VPC in which the endpoint will be used"
 }
 
 ################################################################################
