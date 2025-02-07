@@ -30,7 +30,7 @@ variable "endpoints" {
     }))
   }))
 
-  default     = {}
+  default = {}
   description = "A map of interface and/or gateway endpoints containing their properties and configurations"
 
   validation {

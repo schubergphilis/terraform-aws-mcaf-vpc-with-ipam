@@ -14,7 +14,7 @@ locals {
       zone_name = try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(
         ".", reverse(split(".", endpoint.service_full_name != null ? endpoint.service_full_name : data.aws_vpc_endpoint_service.default[key].service_name))
       )
-    } if endpoint.centralized_endpoint == true || try(endpoint.private_link_dns_options.dns_zone != null, null)
+    } if endpoint.centralized_endpoint == true || try(endpoint.private_link_dns_options.dns_zone != null, false)
   }
 
   # Produces a list of Route53 record definitions for each endpoint.
@@ -22,7 +22,7 @@ locals {
     for key, endpoint in var.endpoints :
 
     # 1) CENTRALIZED => If `centralized_endpoint = true` AND no custom dns_zone. Create alias apex + wildcard record.
-    endpoint.centralized_endpoint == true && length(coalesce(endpoint.private_link_dns_options.dns_records, [])) == 0 ? [
+    endpoint.centralized_endpoint == true && length(try(endpoint.private_link_dns_options.dns_records, [])) == 0 ? [
       {
         alias       = true
         record_name = ""
@@ -38,7 +38,7 @@ locals {
     ]
 
     # 2) CUSTOM ZONE => If `private_link_dns_options.dns_zone` is set => create one record for each name in `dns_records`
-    : length(coalesce(endpoint.private_link_dns_options.dns_records, [])) > 0 ? [
+    : length(try(endpoint.private_link_dns_options.dns_records, [])) > 0 ? [
       for record in endpoint.private_link_dns_options.dns_records : {
         alias       = false
         record_name = record
@@ -77,7 +77,7 @@ resource "aws_vpc_endpoint" "default" {
   auto_accept         = each.value.auto_accept
   ip_address_type     = each.value.ip_address_type
   policy              = each.value.policy
-  private_dns_enabled = each.value.centralized_endpoint == true || try(each.value.private_link_dns_options.dns_zone != null, null) ? false : each.value.private_dns_enabled
+  private_dns_enabled = each.value.centralized_endpoint == true || try(each.value.private_link_dns_options.dns_zone != null, false) ? false : each.value.private_dns_enabled
   route_table_ids     = each.value.route_table_ids
   service_name        = each.value.service_full_name != null ? each.value.service_full_name : data.aws_vpc_endpoint_service.default[each.key].service_name # If user explicitly provides a service endpoint, use it. Otherwise, use the discovered service_name.
   service_region      = each.value.service_region
