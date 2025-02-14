@@ -1,5 +1,5 @@
 locals {
-  endpoints = [
+  endpoints_list = [
     "access-analyzer",
     "acm-pca",
     "ec2messages",
@@ -7,7 +7,7 @@ locals {
     "ecr.dkr",
   ]
 
-  endpoints_map = { for endpoint in local.endpoints : endpoint => {
+  endpoints = { for endpoint in local.endpoints_list : endpoint => {
     centralized_endpoint = true
     service              = endpoint
     }
@@ -43,19 +43,39 @@ module "hub_vpc" {
   ]
 }
 
-module "hub_vpc_endpoints" {
-  source = "../../modules/vpc-endpoints"
+module "security_group" {
+  source = "schubergphilis/mcaf-security-group/aws"
 
-  endpoints                  = local.endpoints_map
-  security_group_description = "VPC endpoint security group"
-  security_group_name_prefix = "hub-vpc-endpoints-"
-  subnet_ids                 = module.hub_vpc.subnet_ids["private"]
-  vpc_id                     = module.hub_vpc.vpc_id
+  description = "VPC endpoint security group"
+  name_prefix = "hub-vpc-endpoints-"
+  vpc_id      = module.hub_vpc.vpc_id
 
-  security_group_ingress_rules = {
+  ingress_rules = {
     spoke_vpcs = {
       description = "Allow access from all spoke VPCs"
       cidr_ipv4   = "10.64.0.0/12"
     }
   }
+}
+
+module "hub_vpc_endpoints" {
+  source = "../../modules/vpc-endpoints"
+
+  for_each = local.endpoints
+
+  auto_accept              = lookup(each.value, "auto_accept", null)
+  centralized_endpoint     = lookup(each.value, "centralized_endpoint", null)
+  dns_options              = lookup(each.value, "dns_options", null)
+  ip_address_type          = lookup(each.value, "ip_address_type", null)
+  policy                   = lookup(each.value, "policy", null)
+  private_dns_enabled      = lookup(each.value, "private_dns_enabled", null)
+  private_link_dns_options = lookup(each.value, "private_link_dns_options", null)
+  route_table_ids          = lookup(each.value, "route_table_ids", null)
+  security_group_ids       = [module.security_group.id]
+  service                  = lookup(each.value, "service", null)
+  service_full_name        = lookup(each.value, "service_full_name", null)
+  service_region           = lookup(each.value, "service_region", null)
+  subnet_ids               = module.hub_vpc.subnet_ids["private"]
+  type                     = lookup(each.value, "type", null)
+  vpc_id                   = module.hub_vpc.vpc_id
 }

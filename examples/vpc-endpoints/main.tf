@@ -1,3 +1,26 @@
+locals {
+  endpoints = {
+    s3 = {
+      service = "s3"
+      dns_options = {
+        private_dns_only_for_inbound_resolver_endpoint = false
+      }
+    },
+    dynamodb = {
+      policy          = data.aws_iam_policy_document.dynamodb_endpoint_policy.json
+      route_table_ids = module.vpc.route_table_ids["private"]
+      service         = "dynamodb"
+      type            = "Gateway"
+    },
+    ecs = {
+      service = "ecs"
+    },
+    ecr_api = {
+      service = "ecr.api"
+    }
+  }
+}
+
 provider "aws" {
   region = "eu-west-1"
 }
@@ -27,44 +50,41 @@ module "vpc" {
   ]
 }
 
-module "vpc_endpoints" {
-  source = "../../modules/vpc-endpoints"
+module "security_group" {
+  source = "schubergphilis/mcaf-security-group/aws"
 
-  security_group_description = "VPC endpoint security group"
-  security_group_name_prefix = "vpc-endpoints-"
-  subnet_ids                 = module.vpc.subnet_ids["private"]
-  vpc_id                     = module.vpc.vpc_id
+  description = "VPC endpoint security group"
+  name_prefix = "vpc-endpoints-"
+  vpc_id      = module.vpc.vpc_id
 
-  security_group_ingress_rules = {
+  ingress_rules = {
     ingress_https = {
       description = "HTTPS from VPC"
       cidr_ipv4   = module.vpc.vpc_cidr_block
     }
   }
+}
 
-  endpoints = {
-    s3 = {
-      service             = "s3"
-      private_dns_enabled = true
-      dns_options = {
-        private_dns_only_for_inbound_resolver_endpoint = false
-      }
-    },
-    dynamodb = {
-      policy          = data.aws_iam_policy_document.dynamodb_endpoint_policy.json
-      route_table_ids = module.vpc.route_table_ids["private"]
-      service         = "dynamodb"
-      type            = "Gateway"
-    },
-    ecs = {
-      service             = "ecs"
-      private_dns_enabled = true
-    },
-    ecr_api = {
-      service             = "ecr.api"
-      private_dns_enabled = true
-    }
-  }
+module "vpc_endpoints" {
+  source = "../../modules/vpc-endpoints"
+
+  for_each = local.endpoints
+
+  auto_accept              = lookup(each.value, "auto_accept", null)
+  centralized_endpoint     = lookup(each.value, "centralized_endpoint", null)
+  dns_options              = lookup(each.value, "dns_options", null)
+  ip_address_type          = lookup(each.value, "ip_address_type", null)
+  policy                   = lookup(each.value, "policy", null)
+  private_dns_enabled      = lookup(each.value, "private_dns_enabled", null)
+  private_link_dns_options = lookup(each.value, "private_link_dns_options", null)
+  route_table_ids          = lookup(each.value, "route_table_ids", null)
+  security_group_ids       = [module.security_group.id]
+  service                  = lookup(each.value, "service", null)
+  service_full_name        = lookup(each.value, "service_full_name", null)
+  service_region           = lookup(each.value, "service_region", null)
+  subnet_ids               = module.vpc.subnet_ids["private"]
+  type                     = lookup(each.value, "type", null)
+  vpc_id                   = module.vpc.vpc_id
 }
 
 data "aws_iam_policy_document" "dynamodb_endpoint_policy" {
