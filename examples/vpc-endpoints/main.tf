@@ -70,21 +70,22 @@ module "vpc_endpoint" {
 
   for_each = local.endpoints
 
-  auto_accept              = lookup(each.value, "auto_accept", null)
-  centralized_endpoint     = lookup(each.value, "centralized_endpoint", null)
-  dns_options              = lookup(each.value, "dns_options", null)
+  auto_accept              = lookup(each.value, "auto_accept", false)
+  centralized_endpoint     = lookup(each.value, "centralized_endpoint", false)
+  dns_options              = lookup(each.value, "dns_options", {})
   ip_address_type          = lookup(each.value, "ip_address_type", null)
   policy                   = lookup(each.value, "policy", null)
-  private_dns_enabled      = lookup(each.value, "private_dns_enabled", null)
-  private_link_dns_options = lookup(each.value, "private_link_dns_options", null)
-  route_table_ids          = lookup(each.value, "route_table_ids", null)
-  security_group_ids       = [module.security_group.id]
+  private_dns_enabled      = lookup(each.value, "private_dns_enabled", true)
+  private_link_dns_options = lookup(each.value, "private_link_dns_options", {})
+  route_table_ids          = lookup(each.value, "route_table_ids", [])
   service                  = lookup(each.value, "service", null)
   service_full_name        = lookup(each.value, "service_full_name", null)
   service_region           = lookup(each.value, "service_region", null)
-  subnet_ids               = module.vpc.subnet_ids["private"]
-  type                     = lookup(each.value, "type", null)
-  vpc_id                   = module.vpc.vpc_id
+  type                     = lookup(each.value, "type", "Interface")
+
+  security_group_ids = [module.security_group.id]
+  subnet_ids         = module.vpc.subnet_ids["private"]
+  vpc_id             = module.vpc.vpc_id
 }
 
 data "aws_iam_policy_document" "dynamodb_endpoint_policy" {

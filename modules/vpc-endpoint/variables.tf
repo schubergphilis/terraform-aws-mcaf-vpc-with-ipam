@@ -34,8 +34,8 @@ variable "ip_address_type" {
   description = "IP address type for the endpoint."
 
   validation {
-    condition     = contains(["ipv4", "ipv6", "dualstack"], var.ip_address_type)
-    error_message = "'ip_address_type' must be one of: ipv4, ipv6, or dualstack."
+    condition     = var.ip_address_type == null ? true : contains(["ipv4", "ipv6", "dualstack"], var.ip_address_type)
+    error_message = "If provided, 'ip_address_type' must be one of: ipv4, ipv6, or dualstack."
   }
 }
 
@@ -56,7 +56,7 @@ variable "private_link_dns_options" {
     dns_record_ttl   = optional(number, 300)
     dns_record_type  = optional(string, "CNAME")
     dns_record_names = optional(list(string), [])
-    dns_zone         = string
+    dns_zone         = optional(string)
   })
   default     = {}
   description = "Custom DNS options for PrivateLink endpoints."
