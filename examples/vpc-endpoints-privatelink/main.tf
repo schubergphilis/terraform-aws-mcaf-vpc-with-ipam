@@ -57,8 +57,8 @@ module "security_group" {
   }
 }
 
-module "vpc_endpoints" {
-  source = "../../modules/vpc-endpoints"
+module "vpc_endpoint" {
+  source = "../../modules/vpc-endpoint"
 
   for_each = local.endpoints
 
