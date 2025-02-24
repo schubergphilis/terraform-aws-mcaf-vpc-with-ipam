@@ -3,7 +3,7 @@
 Terraform module to
 - manage an AWS VPC using the CIDR provided by an IPAM pool.
 - (optional) attaching the VPC to a transit gateway.
-- (optional) create VPC endpoint resources using the vpc-endpoint submodule.
+- (optional) create VPC endpoint resources using the vpc-endpoints submodule.
 
 This module will be merged with https://github.com/schubergphilis/terraform-aws-mcaf-vpc in the future.
 
@@ -21,8 +21,8 @@ This module will be merged with https://github.com/schubergphilis/terraform-aws-
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.82 |
-| <a name="provider_aws.transit_gateway_account"></a> [aws.transit\_gateway\_account](#provider\_aws.transit\_gateway\_account) | >= 5.82 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.85.0 |
+| <a name="provider_aws.transit_gateway_account"></a> [aws.transit\_gateway\_account](#provider\_aws.transit\_gateway\_account) | 5.85.0 |
 
 ## Modules
 
@@ -64,11 +64,11 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names or ids in the region. | `list(string)` | n/a | yes |
 | <a name="input_aws_vpc_ipam_pool"></a> [aws\_vpc\_ipam\_pool](#input\_aws\_vpc\_ipam\_pool) | ID of the IPAM pool to get CIDRs from. | `string` | n/a | yes |
-| <a name="input_name"></a> [name](#input\_name) | Name to be used on all the resources as identifier. | `string` | n/a | yes |
-| <a name="input_networks"></a> [networks](#input\_networks) | A list of objects describing requested subnetwork prefixes. | <pre>list(object({<br/>    name           = string<br/>    cidr_netmask   = number<br/>    public         = optional(bool, false)<br/>    nat_gw         = optional(bool, false)<br/>    tgw_attachment = optional(bool, false)<br/>    tags           = optional(map(string), {})<br/>  }))</pre> | n/a | yes |
 | <a name="input_cloudwatch_flow_logs_configuration"></a> [cloudwatch\_flow\_logs\_configuration](#input\_cloudwatch\_flow\_logs\_configuration) | Cloudwatch flow logs configuration | <pre>object({<br/>    iam_path                 = optional(string, "/")<br/>    iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")<br/>    iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")<br/>    kms_key_arn              = optional(string)<br/>    log_group_name           = optional(string)<br/>    max_aggregation_interval = optional(number, 60)<br/>    retention_in_days        = optional(number, 90)<br/>    traffic_type             = optional(string, "ALL")<br/>  })</pre> | `{}` | no |
 | <a name="input_enable_dns_hostnames"></a> [enable\_dns\_hostnames](#input\_enable\_dns\_hostnames) | Enable DNS hostnames in the VPC. | `bool` | `true` | no |
 | <a name="input_manage_default_vpc"></a> [manage\_default\_vpc](#input\_manage\_default\_vpc) | Should be true to adopt and manage the default VPC. | `bool` | `true` | no |
+| <a name="input_name"></a> [name](#input\_name) | Name to be used on all the resources as identifier. | `string` | n/a | yes |
+| <a name="input_networks"></a> [networks](#input\_networks) | A list of objects describing requested subnetwork prefixes. | <pre>list(object({<br/>    name           = string<br/>    cidr_netmask   = number<br/>    public         = optional(bool, false)<br/>    nat_gw         = optional(bool, false)<br/>    tgw_attachment = optional(bool, false)<br/>    tags           = optional(map(string), {})<br/>  }))</pre> | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
 | <a name="input_transit_gateway_appliance_mode_support"></a> [transit\_gateway\_appliance\_mode\_support](#input\_transit\_gateway\_appliance\_mode\_support) | Enable to attach the VPC in appliance mode on the Transit Gateway. | `bool` | `false` | no |
 | <a name="input_transit_gateway_id"></a> [transit\_gateway\_id](#input\_transit\_gateway\_id) | Transit Gateway ID. | `string` | `""` | no |
