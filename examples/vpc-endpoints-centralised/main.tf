@@ -1,5 +1,5 @@
 locals {
-  endpoints = [
+  endpoints_list = [
     "access-analyzer",
     "acm-pca",
     "ec2messages",
@@ -7,7 +7,7 @@ locals {
     "ecr.dkr",
   ]
 
-  endpoints_map = { for endpoint in local.endpoints : endpoint => {
+  endpoints = { for endpoint in local.endpoints_list : endpoint => {
     centralized_endpoint = true
     service              = endpoint
     }
@@ -43,19 +43,28 @@ module "hub_vpc" {
   ]
 }
 
-module "hub_vpc_endpoints" {
-  source = "../../modules/vpc-endpoints"
 
-  endpoints                  = local.endpoints_map
-  security_group_description = "VPC endpoint security group"
-  security_group_name_prefix = "hub-vpc-endpoints-"
-  subnet_ids                 = module.hub_vpc.subnet_ids["private"]
-  vpc_id                     = module.hub_vpc.vpc_id
+module "security_group" {
+  source  = "schubergphilis/mcaf-security-group/aws"
+  version = "~> 0.1"
 
-  security_group_ingress_rules = {
+  description = "VPC endpoint security group"
+  name_prefix = "hub-vpc-endpoints-"
+  vpc_id      = module.hub_vpc.vpc_id
+
+  ingress_rules = {
     spoke_vpcs = {
       description = "Allow access from all spoke VPCs"
       cidr_ipv4   = "10.64.0.0/12"
     }
   }
+}
+
+module "hub_vpc_endpoints" {
+  source = "../../modules/vpc-endpoints"
+
+  endpoints          = local.endpoints
+  security_group_ids = [module.security_group.id]
+  subnet_ids         = module.hub_vpc.subnet_ids["private"]
+  vpc_id             = module.hub_vpc.vpc_id
 }

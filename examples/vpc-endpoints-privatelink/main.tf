@@ -1,5 +1,5 @@
 locals {
-  endpoints_private_link_map = {
+  endpoints = {
     snowflake = {
       service_full_name = "com.amazonaws.vpce.eu-central-1.vpce-svc-01234567891234567"
       private_link_dns_options = {
@@ -42,19 +42,27 @@ module "vpc" {
   ]
 }
 
-module "vpc_endpoints" {
-  source = "../../modules/vpc-endpoints"
+module "security_group" {
+  source  = "schubergphilis/mcaf-security-group/aws"
+  version = "~> 0.1"
 
-  endpoints                  = local.endpoints_private_link_map
-  security_group_description = "VPC endpoint security group"
-  security_group_name_prefix = "vpc-endpoints-"
-  subnet_ids                 = module.vpc.subnet_ids["private"]
-  vpc_id                     = module.vpc.vpc_id
+  description = "VPC endpoint security group"
+  name_prefix = "vpc-endpoints-"
+  vpc_id      = module.vpc.vpc_id
 
-  security_group_ingress_rules = {
+  ingress_rules = {
     ingress_https = {
       description = "HTTPS from VPC"
       cidr_ipv4   = module.vpc.vpc_cidr_block
     }
   }
+}
+
+module "vpc_endpoints" {
+  source = "../../modules/vpc-endpoints"
+
+  endpoints          = local.endpoints
+  security_group_ids = [module.security_group.id]
+  subnet_ids         = module.vpc.subnet_ids["private"]
+  vpc_id             = module.vpc.vpc_id
 }

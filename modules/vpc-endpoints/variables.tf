@@ -7,7 +7,7 @@ variable "endpoints" {
     auto_accept          = optional(bool)
     ip_address_type      = optional(string)
     policy               = optional(string)
-    private_dns_enabled  = optional(bool)
+    private_dns_enabled  = optional(bool, true)
     centralized_endpoint = optional(bool, false)
     route_table_ids      = optional(list(string))
     security_group_ids   = optional(list(string), [])
@@ -56,11 +56,6 @@ variable "endpoints" {
   validation {
     condition     = alltrue([for endpoint in values(var.endpoints) : endpoint.service_region == null || endpoint.type == "Interface"])
     error_message = "For each endpoint, 'service_region' can only be defined if 'type' is Interface."
-  }
-
-  validation {
-    condition     = alltrue([for endpoint in values(var.endpoints) : endpoint.private_dns_enabled != true || endpoint.type == "Interface"])
-    error_message = "For each endpoint, 'private_dns_enabled' can only be true if 'type' is Interface."
   }
 }
 
