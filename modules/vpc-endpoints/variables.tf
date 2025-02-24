@@ -64,6 +64,12 @@ variable "endpoints" {
   }
 }
 
+variable "security_group_ids" {
+  type        = list(string)
+  default     = []
+  description = "Default security group IDs to associate with all VPC endpoints"
+}
+
 variable "subnet_ids" {
   type        = list(string)
   default     = []
@@ -89,54 +95,5 @@ variable "timeouts" {
 
 variable "vpc_id" {
   type        = string
-  default     = null
   description = "The ID of the VPC in which the endpoint will be used"
-}
-
-################################################################################
-# Security Group
-################################################################################
-
-variable "security_group_name" {
-  type        = string
-  default     = null
-  description = "Name to use on security group created. Conflicts with `security_group_name_prefix`"
-}
-
-variable "security_group_name_prefix" {
-  type        = string
-  default     = null
-  description = "Name prefix to use on security group created. Conflicts with `security_group_name`"
-}
-
-variable "security_group_description" {
-  type        = string
-  default     = null
-  description = "Description of the security group created"
-}
-
-variable "security_group_ids" {
-  type        = list(string)
-  default     = []
-  description = "Default security group IDs to associate with all VPC endpoints"
-}
-
-variable "security_group_ingress_rules" {
-  type = map(object({
-    cidr_ipv4                    = optional(string)
-    cidr_ipv6                    = optional(string)
-    description                  = string
-    from_port                    = optional(number, 0)
-    ip_protocol                  = optional(string, "-1")
-    prefix_list_id               = optional(string)
-    referenced_security_group_id = optional(string)
-    to_port                      = optional(number, 0)
-  }))
-  default     = {}
-  description = "Security Group ingress rules"
-
-  validation {
-    condition     = alltrue([for o in var.security_group_ingress_rules : (o.cidr_ipv4 != null || o.cidr_ipv6 != null || o.prefix_list_id != null || o.referenced_security_group_id != null)])
-    error_message = "Although \"cidr_ipv4\", \"cidr_ipv6\", \"prefix_list_id\", and \"referenced_security_group_id\" are all marked as optional, you must provide one of them in order to configure the ingress of the traffic."
-  }
 }

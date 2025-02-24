@@ -1,7 +1,4 @@
 locals {
-  create_security_group = var.security_group_name != null || var.security_group_name_prefix != null
-  security_group_ids    = local.create_security_group ? concat(var.security_group_ids, [aws_security_group.default[0].id]) : var.security_group_ids
-
   # Produces a map of endpoint keys to an object containing the zone_name & service_region. Each entry represents
   # a custom hosted zone that we want to create. We only include endpoints when either:
   #   1) The endpoint has centralized_endpoint = true (no explicit dns_zone set). In that case,
@@ -91,20 +88,20 @@ resource "aws_vpc_endpoint" "default" {
   vpc_id              = var.vpc_id
 
   # Only set security groups for Interface endpoints.
-  # Merge the local security group IDs (var.security_group_ids + optional module security group) with the endpoint "override" security_group_ids.
-  # Returns a distinct set or null if empty.
+  # Coalesce var.security_group_ids with the endpoint "override" security_group_ids.
+  # Returns a list or null if empty.
   security_group_ids = each.value.type == "Interface" ? (
-    length(distinct(concat(local.security_group_ids, each.value.security_group_ids))) > 0
-    ? distinct(concat(local.security_group_ids, each.value.security_group_ids))
+    length(coalescelist(each.value.security_group_ids, var.security_group_ids)) > 0
+    ? coalescelist(each.value.security_group_ids, var.security_group_ids)
     : null
   ) : null
 
-  # Only set subnet ids for Interface & GatewayLoadBalancer endpoints.
-  # Merge var.subnet_ids with the endpoint "override" subnet_ids.
-  # Returns a distinct set or null if empty.
+  # Only set subnet IDs for Interface & GatewayLoadBalancer endpoints.
+  # Coalesce var.subnet_ids with the endpoint "override" subnet_ids.
+  # Returns a list or null if empty.
   subnet_ids = contains(["Interface", "GatewayLoadBalancer"], each.value.type) ? (
-    length(distinct(concat(var.subnet_ids, each.value.subnet_ids))) > 0
-    ? distinct(concat(var.subnet_ids, each.value.subnet_ids))
+    length(coalescelist(each.value.subnet_ids, var.subnet_ids)) > 0
+    ? coalescelist(each.value.subnet_ids, var.subnet_ids)
     : null
   ) : null
 
@@ -170,37 +167,4 @@ resource "aws_route53_record" "endpoint_dns_records" {
       zone_id                = aws_vpc_endpoint.default[each.value.endpoint].dns_entry[0].hosted_zone_id
     }
   }
-}
-
-################################################################################
-# Security Group
-################################################################################
-
-resource "aws_security_group" "default" {
-  #checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource" - False positive.
-  count = local.create_security_group ? 1 : 0
-
-  name        = var.security_group_name_prefix == null ? var.security_group_name : null
-  name_prefix = var.security_group_name_prefix != null ? var.security_group_name_prefix : null
-  description = var.security_group_description
-  vpc_id      = var.vpc_id
-  tags        = var.tags
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_vpc_security_group_ingress_rule" "default" {
-  for_each = local.create_security_group && length(var.security_group_ingress_rules) != 0 ? var.security_group_ingress_rules : {}
-
-  cidr_ipv4                    = each.value.cidr_ipv4
-  cidr_ipv6                    = each.value.cidr_ipv6
-  description                  = each.value.description
-  from_port                    = each.value.from_port
-  ip_protocol                  = each.value.ip_protocol
-  prefix_list_id               = each.value.prefix_list_id
-  referenced_security_group_id = each.value.referenced_security_group_id
-  security_group_id            = aws_security_group.default[0].id
-  to_port                      = each.value.to_port
 }
