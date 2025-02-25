@@ -263,4 +263,3 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
 
   depends_on = [aws_ec2_transit_gateway_vpc_attachment_accepter.default]
 }
-

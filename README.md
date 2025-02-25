@@ -1,7 +1,12 @@
 # terraform-aws-mcaf-vpc-with-ipam
-Terraform module to manage an AWS VPC using the CIDR provided by an IPAM pool and attaching the VPC to a transit gateway.
 
-This module will be merged with https://github.com/schubergphilis/terraform-aws-mcaf-vpc in the future.
+Terraform module to:
+
+- create and manage a VPC (using a CIDR provided by an existing IPAM pool)
+- (optionally) attach the VPC to an existing transit gateway
+- (optionally) create VPC endpoint resources using the [VPC endpoints](modules/vpc-endpoints) submodule
+
+This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/schubergphilis/terraform-aws-mcaf-vpc) module in the future.
 
 ## Usage
 
@@ -10,15 +15,15 @@ This module will be merged with https://github.com/schubergphilis/terraform-aws-
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.20 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.82 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.20 |
-| <a name="provider_aws.transit_gateway_account"></a> [aws.transit\_gateway\_account](#provider\_aws.transit\_gateway\_account) | >= 5.20 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.82 |
+| <a name="provider_aws.transit_gateway_account"></a> [aws.transit\_gateway\_account](#provider\_aws.transit\_gateway\_account) | >= 5.82 |
 
 ## Modules
 
@@ -61,8 +66,8 @@ No modules.
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names or ids in the region. | `list(string)` | n/a | yes |
 | <a name="input_aws_vpc_ipam_pool"></a> [aws\_vpc\_ipam\_pool](#input\_aws\_vpc\_ipam\_pool) | ID of the IPAM pool to get CIDRs from. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name to be used on all the resources as identifier. | `string` | n/a | yes |
-| <a name="input_networks"></a> [networks](#input\_networks) | A list of objects describing requested subnetwork prefixes. | <pre>list(object({<br>    name           = string<br>    cidr_netmask   = number<br>    public         = optional(bool, false)<br>    nat_gw         = optional(bool, false)<br>    tgw_attachment = optional(bool, false)<br>    tags           = optional(map(string), {})<br>  }))</pre> | n/a | yes |
-| <a name="input_cloudwatch_flow_logs_configuration"></a> [cloudwatch\_flow\_logs\_configuration](#input\_cloudwatch\_flow\_logs\_configuration) | Cloudwatch flow logs configuration | <pre>object({<br>    iam_path                 = optional(string, "/")<br>    iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")<br>    iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")<br>    kms_key_arn              = optional(string)<br>    log_group_name           = optional(string)<br>    max_aggregation_interval = optional(number, 60)<br>    retention_in_days        = optional(number, 90)<br>    traffic_type             = optional(string, "ALL")<br>  })</pre> | `{}` | no |
+| <a name="input_networks"></a> [networks](#input\_networks) | A list of objects describing requested subnetwork prefixes. | <pre>list(object({<br/>    name           = string<br/>    cidr_netmask   = number<br/>    public         = optional(bool, false)<br/>    nat_gw         = optional(bool, false)<br/>    tgw_attachment = optional(bool, false)<br/>    tags           = optional(map(string), {})<br/>  }))</pre> | n/a | yes |
+| <a name="input_cloudwatch_flow_logs_configuration"></a> [cloudwatch\_flow\_logs\_configuration](#input\_cloudwatch\_flow\_logs\_configuration) | Cloudwatch flow logs configuration | <pre>object({<br/>    iam_path                 = optional(string, "/")<br/>    iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")<br/>    iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")<br/>    kms_key_arn              = optional(string)<br/>    log_group_name           = optional(string)<br/>    max_aggregation_interval = optional(number, 60)<br/>    retention_in_days        = optional(number, 90)<br/>    traffic_type             = optional(string, "ALL")<br/>  })</pre> | `{}` | no |
 | <a name="input_enable_dns_hostnames"></a> [enable\_dns\_hostnames](#input\_enable\_dns\_hostnames) | Enable DNS hostnames in the VPC. | `bool` | `true` | no |
 | <a name="input_manage_default_vpc"></a> [manage\_default\_vpc](#input\_manage\_default\_vpc) | Should be true to adopt and manage the default VPC. | `bool` | `true` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
@@ -86,6 +91,18 @@ No modules.
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC |
 <!-- END_TF_DOCS -->
 
-## Licensing
+## License
 
-100% Open Source and licensed under the Apache License Version 2.0. See [LICENSE](https://github.com/schubergphilis/terraform-aws-mcaf-vpc-with-ipam/blob/main/LICENSE) for full details.
+**Copyright:** Schuberg Philis
+
+```text
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
