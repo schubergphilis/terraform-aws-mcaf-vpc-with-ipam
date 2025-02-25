@@ -1,11 +1,12 @@
 # terraform-aws-mcaf-vpc-with-ipam
 
-Terraform module to
-- manage an AWS VPC using the CIDR provided by an IPAM pool.
-- (optional) attaching the VPC to a transit gateway.
-- (optional) create VPC endpoint resources using the vpc-endpoints submodule.
+Terraform module to:
 
-This module will be merged with https://github.com/schubergphilis/terraform-aws-mcaf-vpc in the future.
+- create and manage a VPC (using a CIDR provided by an existing IPAM pool)
+- (optionally) attach the VPC to an existing transit gateway
+- (optionally) create VPC endpoint resources using the [VPC endpoints](modules/vpc-endpoints) submodule
+
+This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/schubergphilis/terraform-aws-mcaf-vpc) module in the future.
 
 ## Usage
 
