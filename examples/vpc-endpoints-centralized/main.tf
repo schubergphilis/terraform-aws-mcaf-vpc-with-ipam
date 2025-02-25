@@ -7,10 +7,8 @@ locals {
     "ecr.dkr",
   ]
 
-  endpoints = { for endpoint in local.endpoints_list : endpoint => {
-    centralized_endpoint = true
-    service              = endpoint
-    }
+  endpoints = { for endpoint in local.endpoints_list :
+    endpoint => { centralized_endpoint = true, service = endpoint }
   }
 }
 
