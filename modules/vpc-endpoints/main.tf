@@ -4,7 +4,7 @@ locals {
   # If user explicitly provides a service endpoint, use it. Otherwise, use the discovered service_name.
   real_service_names = {
     for key, endpoint in var.endpoints :
-    key => endpoint.service_full_name != null ? endpoint.service_full_name : data.aws_vpc_endpoint_service.default[key].service_name
+    key => coalesce(endpoint.service_full_name, data.aws_vpc_endpoint_service.default[key].service_name)
   }
 
   # Private DNS is disabled for centralized endpoints, endpoints with a custom privatelink dns_zone, or non-Interface endpoint types.
