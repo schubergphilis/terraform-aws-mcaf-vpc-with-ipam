@@ -18,7 +18,7 @@ variable "s3_flow_logs_configuration" {
     traffic_type      = string
   })
   default     = null
-  description = "Variables to enable flow logs stored in S3 for the VPC. When bucket_arn is specified, it will not create a new bucket."
+  description = "Variables to enable S3 flow logs for the VPC."
 }
 
 variable "cloudwatch_flow_logs_configuration" {
@@ -31,7 +31,7 @@ variable "cloudwatch_flow_logs_configuration" {
     traffic_type                 = string
   })
   default     = null
-  description = "Variables to enable flow logs for the VPC"
+  description = "Variables to enable CloudWatch flow logs for the VPC."
 }
 
 variable "enable_dns_hostnames" {
