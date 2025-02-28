@@ -22,13 +22,16 @@ This module will be merged with https://github.com/schubergphilis/terraform-aws-
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_flow_logs_role"></a> [flow\_logs\_role](#module\_flow\_logs\_role) | schubergphilis/mcaf-role/aws | ~> 0.4.0 |
+| <a name="module_log_bucket"></a> [log\_bucket](#module\_log\_bucket) | schubergphilis/mcaf-s3/aws | ~> 1.2.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_log_group.vpc_flow_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
+| [aws_cloudwatch_log_group.flow_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_default_security_group.default_vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group) | resource |
 | [aws_default_security_group.workload_vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group) | resource |
 | [aws_default_vpc.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_vpc) | resource |
@@ -37,10 +40,8 @@ No modules.
 | [aws_ec2_transit_gateway_vpc_attachment.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ec2_transit_gateway_vpc_attachment) | resource |
 | [aws_ec2_transit_gateway_vpc_attachment_accepter.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ec2_transit_gateway_vpc_attachment_accepter) | resource |
 | [aws_eip.nat_gw](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip) | resource |
-| [aws_flow_log.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/flow_log) | resource |
-| [aws_iam_policy.vpc_flow_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_role.vpc_flow_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy_attachment.vpc_flow_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_flow_log.flow_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/flow_log) | resource |
+| [aws_flow_log.flow_logs_s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/flow_log) | resource |
 | [aws_internet_gateway.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway) | resource |
 | [aws_nat_gateway.public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway) | resource |
 | [aws_route.internet_gateway](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route) | resource |
@@ -50,8 +51,7 @@ No modules.
 | [aws_vpc.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc) | resource |
 | [aws_vpc_ipam_preview_next_cidr.vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_ipam_preview_next_cidr) | resource |
 | [aws_caller_identity.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_iam_policy_document.vpc_flow_log](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.vpc_flow_logs_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.log_stream_action](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -61,10 +61,12 @@ No modules.
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names or ids in the region. | `list(string)` | n/a | yes |
 | <a name="input_aws_vpc_ipam_pool"></a> [aws\_vpc\_ipam\_pool](#input\_aws\_vpc\_ipam\_pool) | ID of the IPAM pool to get CIDRs from. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name to be used on all the resources as identifier. | `string` | n/a | yes |
-| <a name="input_networks"></a> [networks](#input\_networks) | A list of objects describing requested subnetwork prefixes. | <pre>list(object({<br>    name           = string<br>    cidr_netmask   = number<br>    public         = optional(bool, false)<br>    nat_gw         = optional(bool, false)<br>    tgw_attachment = optional(bool, false)<br>    tags           = optional(map(string), {})<br>  }))</pre> | n/a | yes |
-| <a name="input_cloudwatch_flow_logs_configuration"></a> [cloudwatch\_flow\_logs\_configuration](#input\_cloudwatch\_flow\_logs\_configuration) | Cloudwatch flow logs configuration | <pre>object({<br>    iam_path                 = optional(string, "/")<br>    iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")<br>    iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")<br>    kms_key_arn              = optional(string)<br>    log_group_name           = optional(string)<br>    max_aggregation_interval = optional(number, 60)<br>    retention_in_days        = optional(number, 90)<br>    traffic_type             = optional(string, "ALL")<br>  })</pre> | `{}` | no |
+| <a name="input_networks"></a> [networks](#input\_networks) | A list of objects describing requested subnetwork prefixes. | <pre>list(object({<br/>    name           = string<br/>    cidr_netmask   = number<br/>    public         = optional(bool, false)<br/>    nat_gw         = optional(bool, false)<br/>    tgw_attachment = optional(bool, false)<br/>    tags           = optional(map(string), {})<br/>  }))</pre> | n/a | yes |
+| <a name="input_cloudwatch_flow_logs_configuration"></a> [cloudwatch\_flow\_logs\_configuration](#input\_cloudwatch\_flow\_logs\_configuration) | Variables to enable CloudWatch flow logs for the VPC. | <pre>object({<br/>    iam_role_name                = string<br/>    iam_role_permission_boundary = optional(string, null)<br/>    log_format                   = optional(string, null)<br/>    log_group_name               = string<br/>    retention_in_days            = number<br/>    traffic_type                 = string<br/>  })</pre> | `null` | no |
 | <a name="input_enable_dns_hostnames"></a> [enable\_dns\_hostnames](#input\_enable\_dns\_hostnames) | Enable DNS hostnames in the VPC. | `bool` | `true` | no |
 | <a name="input_manage_default_vpc"></a> [manage\_default\_vpc](#input\_manage\_default\_vpc) | Should be true to adopt and manage the default VPC. | `bool` | `true` | no |
+| <a name="input_postfix"></a> [postfix](#input\_postfix) | Postfix the role and policy names with Role and Policy | `bool` | `false` | no |
+| <a name="input_s3_flow_logs_configuration"></a> [s3\_flow\_logs\_configuration](#input\_s3\_flow\_logs\_configuration) | Variables to enable S3 flow logs for the VPC. | <pre>object({<br/>    bucket_name       = optional(string, null)<br/>    log_destination   = optional(string, null)<br/>    log_format        = optional(string, null)<br/>    kms_key_arn       = optional(string, null)<br/>    retention_in_days = number<br/>    traffic_type      = string<br/>  })</pre> | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
 | <a name="input_transit_gateway_appliance_mode_support"></a> [transit\_gateway\_appliance\_mode\_support](#input\_transit\_gateway\_appliance\_mode\_support) | Enable to attach the VPC in appliance mode on the Transit Gateway. | `bool` | `false` | no |
 | <a name="input_transit_gateway_id"></a> [transit\_gateway\_id](#input\_transit\_gateway\_id) | Transit Gateway ID. | `string` | `""` | no |
