@@ -8,19 +8,30 @@ variable "aws_vpc_ipam_pool" {
   description = "ID of the IPAM pool to get CIDRs from."
 }
 
+variable "s3_flow_logs_configuration" {
+  type = object({
+    bucket_name       = optional(string, null)
+    log_destination   = optional(string, null)
+    log_format        = optional(string, null)
+    kms_key_arn       = optional(string, null)
+    retention_in_days = number
+    traffic_type      = string
+  })
+  default     = null
+  description = "Variables to enable flow logs stored in S3 for the VPC. When bucket_arn is specified, it will not create a new bucket."
+}
+
 variable "cloudwatch_flow_logs_configuration" {
   type = object({
-    iam_path                 = optional(string, "/")
-    iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")
-    iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")
-    kms_key_arn              = optional(string)
-    log_group_name           = optional(string)
-    max_aggregation_interval = optional(number, 60)
-    retention_in_days        = optional(number, 90)
-    traffic_type             = optional(string, "ALL")
+    iam_role_name                = string
+    iam_role_permission_boundary = optional(string, null)
+    log_format                   = optional(string, null)
+    log_group_name               = string
+    retention_in_days            = number
+    traffic_type                 = string
   })
-  default     = {}
-  description = "Cloudwatch flow logs configuration"
+  default     = null
+  description = "Variables to enable flow logs for the VPC"
 }
 
 variable "enable_dns_hostnames" {
@@ -86,4 +97,10 @@ variable "vpc_cidr_netmask" {
   type        = number
   default     = 20
   description = "The netmask length of the IPv4 CIDR you want to allocate to this VPC."
+}
+
+variable "postfix" {
+  type        = bool
+  default     = false
+  description = "Postfix the role and policy names with Role and Policy"
 }
