@@ -60,8 +60,11 @@ module "security_group" {
 
   ingress_rules = {
     ingress_https = {
-      description = "HTTPS from VPC"
       cidr_ipv4   = module.vpc.vpc_cidr_block
+      description = "HTTPS from VPC"
+      from_port   = 443
+      ip_protocol = "tcp"
+      to_port     = 443
     }
   }
 }

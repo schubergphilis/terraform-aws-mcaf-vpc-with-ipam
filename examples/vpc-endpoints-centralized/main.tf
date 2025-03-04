@@ -52,8 +52,11 @@ module "security_group" {
 
   ingress_rules = {
     spoke_vpcs = {
-      description = "Allow access from all spoke VPCs"
       cidr_ipv4   = "10.64.0.0/12"
+      description = "Allow access from all spoke VPCs"
+      from_port   = 443
+      ip_protocol = "tcp"
+      to_port     = 443
     }
   }
 }
