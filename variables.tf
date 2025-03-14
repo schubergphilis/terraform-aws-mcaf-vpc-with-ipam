@@ -23,15 +23,17 @@ variable "s3_flow_logs_configuration" {
 
 variable "cloudwatch_flow_logs_configuration" {
   type = object({
-    iam_role_name                = string
-    iam_role_permission_boundary = optional(string, null)
-    log_format                   = optional(string, null)
-    log_group_name               = string
-    retention_in_days            = number
-    traffic_type                 = string
+    iam_path                 = optional(string, "/")
+    iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")
+    iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")
+    kms_key_arn              = optional(string)
+    log_group_name           = optional(string)
+    max_aggregation_interval = optional(number, 60)
+    retention_in_days        = optional(number, 90)
+    traffic_type             = optional(string, "ALL")
   })
   default     = null
-  description = "Variables to enable CloudWatch flow logs for the VPC."
+  description = "Cloudwatch flow logs configuration"
 }
 
 variable "enable_dns_hostnames" {
