@@ -23,7 +23,7 @@ locals {
   }
 
   # Computes the DNS zone name for each endpoint, either derived from the service name or explicitly provided.
-  # If it's derived from the service name then we we reverse the service name 
+  # If it's derived from the service name then we we reverse the service name
   # (e.g., `com.amazonaws.eu-central-1.sts` becomes `sts.eu-central-1.amazonaws.com`).
   custom_zones_name = {
     for key, endpoint in var.endpoints :
@@ -99,7 +99,7 @@ resource "aws_vpc_endpoint" "default" {
   vpc_endpoint_type   = each.value.type
   vpc_id              = var.vpc_id
 
-  # Only set security groups for Interface endpoints. 
+  # Only set security groups for Interface endpoints.
   # Coalesce the provided security group IDs with the default var.security_group_ids (if any).
   # Returns a list of security groups or null if none are provided.
   security_group_ids = each.value.type == "Interface" ? (
@@ -108,7 +108,7 @@ resource "aws_vpc_endpoint" "default" {
     : null
   ) : null
 
-  # Set subnet IDs only for Interface & GatewayLoadBalancer endpoints. 
+  # Set subnet IDs only for Interface & GatewayLoadBalancer endpoints.
   # Coalesce the provided subnet IDs with the default var.subnet_ids (if any).
   # Returns a list of subnet IDs or null if none are provided.
   subnet_ids = contains(["Interface", "GatewayLoadBalancer"], each.value.type) ? (
@@ -152,7 +152,7 @@ resource "aws_route53_zone" "custom_zone" {
     vpc_region = try(var.endpoints[each.key].service_region, data.aws_region.current.name)
   }
 
-  # Prevent the deletion of associated VPCs after the initial creation. 
+  # Prevent the deletion of associated VPCs after the initial creation.
   # See documentation on aws_route53_zone_association for details.
   lifecycle {
     ignore_changes = [vpc]
