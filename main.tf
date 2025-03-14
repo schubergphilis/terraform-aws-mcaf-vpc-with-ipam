@@ -28,10 +28,6 @@ locals {
   }]
 }
 
-data "aws_caller_identity" "default" {}
-
-data "aws_region" "default" {}
-
 resource "aws_vpc_ipam_preview_next_cidr" "vpc" {
   ipam_pool_id   = var.aws_vpc_ipam_pool
   netmask_length = var.vpc_cidr_netmask

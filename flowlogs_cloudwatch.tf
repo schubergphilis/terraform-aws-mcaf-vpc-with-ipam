@@ -1,23 +1,10 @@
-resource "aws_flow_log" "default" {
-  count = var.cloudwatch_flow_logs_configuration != null ? 1 : 0
-
-  iam_role_arn             = aws_iam_role.vpc_flow_logs.arn
-  log_destination          = aws_cloudwatch_log_group.vpc_flow_logs.arn
-  max_aggregation_interval = var.cloudwatch_flow_logs_configuration.max_aggregation_interval
-  traffic_type             = var.cloudwatch_flow_logs_configuration.traffic_type
-  vpc_id                   = aws_vpc.default.id
-
-  tags = var.tags
-}
-
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   count = var.cloudwatch_flow_logs_configuration != null ? 1 : 0
 
   name              = try(var.cloudwatch_flow_logs_configuration.log_group_name, "/ep/${var.name}-flow-logs")
-  retention_in_days = var.cloudwatch_flow_logs_configuration.retention_in_days
   kms_key_id        = var.cloudwatch_flow_logs_configuration.kms_key_arn
-
-  tags = var.tags
+  retention_in_days = var.cloudwatch_flow_logs_configuration.retention_in_days
+  tags              = var.tags
 }
 
 resource "aws_iam_role" "vpc_flow_logs" {
@@ -45,8 +32,8 @@ data "aws_iam_policy_document" "vpc_flow_logs_assume_role" {
 resource "aws_iam_role_policy_attachment" "vpc_flow_logs" {
   count = var.cloudwatch_flow_logs_configuration != null ? 1 : 0
 
-  role       = aws_iam_role.vpc_flow_logs.name
-  policy_arn = aws_iam_policy.vpc_flow_logs.arn
+  role       = aws_iam_role.vpc_flow_logs[0].name
+  policy_arn = aws_iam_policy.vpc_flow_logs[0].arn
 }
 
 resource "aws_iam_policy" "vpc_flow_logs" {
@@ -71,4 +58,16 @@ data "aws_iam_policy_document" "vpc_flow_log" {
 
     resources = ["arn:aws:logs:${data.aws_region.default.name}:${data.aws_caller_identity.default.account_id}:log-group:*:*"]
   }
+}
+
+resource "aws_flow_log" "default" {
+  count = var.cloudwatch_flow_logs_configuration != null ? 1 : 0
+
+  iam_role_arn             = aws_iam_role.vpc_flow_logs[0].arn
+  log_destination          = aws_cloudwatch_log_group.vpc_flow_logs[0].arn
+  log_format               = var.cloudwatch_flow_logs_configuration.log_format
+  max_aggregation_interval = var.cloudwatch_flow_logs_configuration.max_aggregation_interval
+  tags                     = var.tags
+  traffic_type             = var.cloudwatch_flow_logs_configuration.traffic_type
+  vpc_id                   = aws_vpc.default.id
 }

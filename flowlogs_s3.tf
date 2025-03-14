@@ -6,13 +6,12 @@ locals {
 module "log_bucket" {
   source  = "schubergphilis/mcaf-s3/aws"
   version = "~> 1.2.0"
-  count   = local.create_bucket ? 1 : 0
+
+  count = local.create_bucket ? 1 : 0
 
   name        = var.s3_flow_logs_configuration.bucket_name
-  versioning  = true
   kms_key_arn = var.s3_flow_logs_configuration.kms_key_arn
-
-  tags = var.tags
+  tags        = var.tags
 
   lifecycle_rule = [
     {
@@ -25,6 +24,10 @@ module "log_bucket" {
 
       noncurrent_version_expiration = {
         noncurrent_days = var.s3_flow_logs_configuration.retention_in_days
+      }
+
+      expiration = {
+        days = var.s3_flow_logs_configuration.retention_in_days
       }
     }
   ]
@@ -76,13 +79,17 @@ EOF
 resource "aws_flow_log" "flow_logs_s3" {
   count = local.store_logs_in_s3 ? 1 : 0
 
-  log_destination      = local.create_bucket ? module.log_bucket[count.index].arn : "arn:aws:s3:::${var.s3_flow_logs_configuration.log_destination}"
-  log_destination_type = "s3"
-  traffic_type         = var.s3_flow_logs_configuration.traffic_type
-  vpc_id               = aws_vpc.default.id
-  tags                 = var.tags
+  log_destination          = local.create_bucket ? module.log_bucket[count.index].arn : var.s3_flow_logs_configuration.bucket_arn
+  log_destination_type     = "s3"
+  log_format               = var.s3_flow_logs_configuration.log_format
+  max_aggregation_interval = var.s3_flow_logs_configuration.max_aggregation_interval
+  tags                     = var.tags
+  traffic_type             = var.s3_flow_logs_configuration.traffic_type
+  vpc_id                   = aws_vpc.default.id
+
   destination_options {
-    file_format        = var.s3_flow_logs_configuration.log_format
-    per_hour_partition = true
+    file_format                = var.s3_flow_logs_configuration.destination_options.file_format
+    hive_compatible_partitions = var.s3_flow_logs_configuration.destination_options.hive_compatible_partitions
+    per_hour_partition         = var.s3_flow_logs_configuration.destination_options.per_hour_partition
   }
 }
