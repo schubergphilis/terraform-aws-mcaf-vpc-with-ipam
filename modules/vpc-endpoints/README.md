@@ -57,12 +57,12 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC in which the endpoint will be used | `string` | n/a | yes |
 | <a name="input_endpoints"></a> [endpoints](#input\_endpoints) | A map of interface and/or gateway endpoints containing their properties and configurations | <pre>map(object({<br/>    auto_accept          = optional(bool)<br/>    ip_address_type      = optional(string)<br/>    policy               = optional(string)<br/>    private_dns_enabled  = optional(bool, true)<br/>    centralized_endpoint = optional(bool, false)<br/>    route_table_ids      = optional(list(string))<br/>    security_group_ids   = optional(list(string), [])<br/>    service              = optional(string) #e.g. s3<br/>    service_full_name    = optional(string) #e.g. com.amazonaws.eu-west-1.s3<br/>    service_region       = optional(string)<br/>    type                 = optional(string, "Interface")<br/>    subnet_ids           = optional(list(string), [])<br/><br/>    dns_options = optional(object({<br/>      dns_record_ip_type                             = optional(string)<br/>      private_dns_only_for_inbound_resolver_endpoint = optional(bool)<br/>    }))<br/><br/>    private_link_dns_options = optional(object({<br/>      dns_record_ttl  = optional(number, 300)<br/>      dns_record_type = optional(string, "CNAME")<br/>      dns_records     = optional(list(string), [])<br/>      dns_zone        = string<br/>    }))<br/>  }))</pre> | `{}` | no |
 | <a name="input_security_group_ids"></a> [security\_group\_ids](#input\_security\_group\_ids) | Default security group IDs to associate with all VPC endpoints | `list(string)` | `[]` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Default subnets IDs to associate with all VPC endpoints | `list(string)` | `[]` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to assign on all resources | `map(string)` | `{}` | no |
 | <a name="input_timeouts"></a> [timeouts](#input\_timeouts) | Define custom maximum timeout for creating, updating, and deleting VPC endpoint resources | <pre>object({<br/>    create = optional(string, "10m")<br/>    update = optional(string, "10m")<br/>    delete = optional(string, "10m")<br/>  })</pre> | `{}` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC in which the endpoint will be used | `string` | n/a | yes |
 
 ## Outputs
 
