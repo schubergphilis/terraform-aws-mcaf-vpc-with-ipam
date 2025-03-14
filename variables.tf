@@ -8,6 +8,19 @@ variable "aws_vpc_ipam_pool" {
   description = "ID of the IPAM pool to get CIDRs from."
 }
 
+variable "s3_flow_logs_configuration" {
+  type = object({
+    bucket_name       = optional(string, null)
+    log_destination   = optional(string, null)
+    log_format        = optional(string, null)
+    kms_key_arn       = optional(string, null)
+    retention_in_days = number
+    traffic_type      = string
+  })
+  default     = null
+  description = "Variables to enable S3 flow logs for the VPC."
+}
+
 variable "cloudwatch_flow_logs_configuration" {
   type = object({
     iam_path                 = optional(string, "/")
@@ -19,7 +32,7 @@ variable "cloudwatch_flow_logs_configuration" {
     retention_in_days        = optional(number, 90)
     traffic_type             = optional(string, "ALL")
   })
-  default     = {}
+  default     = null
   description = "Cloudwatch flow logs configuration"
 }
 
