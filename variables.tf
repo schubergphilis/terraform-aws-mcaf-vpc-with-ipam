@@ -8,18 +8,44 @@ variable "aws_vpc_ipam_pool" {
   description = "ID of the IPAM pool to get CIDRs from."
 }
 
+variable "s3_flow_logs_configuration" {
+  type = object({
+    bucket_arn               = optional(string)
+    bucket_name              = optional(string)
+    kms_key_arn              = string
+    log_format               = optional(string)
+    max_aggregation_interval = optional(number, 60)
+    retention_in_days        = optional(number, 90)
+    traffic_type             = optional(string, "ALL")
+
+    destination_options = optional(object({
+      file_format                = optional(string)
+      hive_compatible_partitions = optional(bool)
+      per_hour_partition         = optional(bool, true)
+    }))
+  })
+  default     = null
+  description = "Variables to enable S3 flow logs for the VPC."
+
+  validation {
+    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.bucket_arn, null) != null || try(var.s3_flow_logs_configuration.bucket_name, null) != null)
+    error_message = "Either bucket_arn or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
+  }
+}
+
 variable "cloudwatch_flow_logs_configuration" {
   type = object({
     iam_path                 = optional(string, "/")
     iam_policy_name_prefix   = optional(string, "vpc-flow-logs-to-cloudwatch-")
     iam_role_name_prefix     = optional(string, "vpc-flow-logs-role-")
-    kms_key_arn              = optional(string)
+    kms_key_arn              = string
+    log_format               = optional(string)
     log_group_name           = optional(string)
     max_aggregation_interval = optional(number, 60)
     retention_in_days        = optional(number, 90)
     traffic_type             = optional(string, "ALL")
   })
-  default     = {}
+  default     = null
   description = "Cloudwatch flow logs configuration"
 }
 
