@@ -8,6 +8,7 @@ variable "aws_vpc_ipam_pool" {
   description = "ID of the IPAM pool to get CIDRs from."
 }
 
+# Either bucket_name or log_destination is required. log_destination 
 variable "s3_flow_logs_configuration" {
   type = object({
     bucket_name              = optional(string)
@@ -28,8 +29,8 @@ variable "s3_flow_logs_configuration" {
   description = "Variables to enable S3 flow logs for the VPC."
 
   validation {
-    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.bucket_arn, null) != null || try(var.s3_flow_logs_configuration.bucket_name, null) != null)
-    error_message = "Either bucket_arn or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
+    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.log_destination, null) != null || try(var.s3_flow_logs_configuration.bucket_name, null) != null)
+    error_message = "Either log_destination or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
   }
 }
 
