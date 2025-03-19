@@ -10,9 +10,9 @@ variable "aws_vpc_ipam_pool" {
 
 variable "s3_flow_logs_configuration" {
   type = object({
-    bucket_arn               = optional(string)
     bucket_name              = optional(string)
     kms_key_arn              = string
+    log_destination          = optional(string)
     log_format               = optional(string)
     max_aggregation_interval = optional(number, 60)
     retention_in_days        = optional(number, 90)
@@ -20,9 +20,9 @@ variable "s3_flow_logs_configuration" {
 
     destination_options = optional(object({
       file_format                = optional(string)
-      hive_compatible_partitions = optional(bool)
+      hive_compatible_partitions = optional(bool, false)
       per_hour_partition         = optional(bool, true)
-    }))
+    }), {})
   })
   default     = null
   description = "Variables to enable S3 flow logs for the VPC."
