@@ -28,7 +28,7 @@ variable "s3_flow_logs_configuration" {
   description = "Variables to enable S3 flow logs for the VPC. Use 'bucket_name' to log to an S3 bucket created by this module. Alternatively, use 'log_destination' to specify a self-managed S3 bucket. The 'log_destination' variable accepts full S3 ARNs, optionally including object keys."
 
   validation {
-    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.log_destination == null && var.s3_flow_logs_configuration.bucket_name != null) || try(var.s3_flow_logs_configuration.log_destination != null && var.s3_flow_logs_configuration.bucket_name == null))
+    condition     = var.s3_flow_logs_configuration == null || (var.s3_flow_logs_configuration.log_destination == null && var.s3_flow_logs_configuration.bucket_name != null || var.s3_flow_logs_configuration.log_destination != null && var.s3_flow_logs_configuration.bucket_name == null)
     error_message = "Either log_destination or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
   }
 }
