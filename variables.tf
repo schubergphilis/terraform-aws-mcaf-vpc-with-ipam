@@ -8,11 +8,13 @@ variable "aws_vpc_ipam_pool" {
   description = "ID of the IPAM pool to get CIDRs from."
 }
 
+# s3_flow_logs_configuration.log_destination accepts full S3 ARNs, optionally including keys. Example:
+# "s3://{bucket_name}/{key_name}" will create a folder in the S3 bucket with the {key_name}
 variable "s3_flow_logs_configuration" {
   type = object({
-    bucket_arn               = optional(string)
     bucket_name              = optional(string)
     kms_key_arn              = string
+    log_destination          = optional(string)
     log_format               = optional(string)
     max_aggregation_interval = optional(number, 60)
     retention_in_days        = optional(number, 90)
@@ -20,16 +22,16 @@ variable "s3_flow_logs_configuration" {
 
     destination_options = optional(object({
       file_format                = optional(string)
-      hive_compatible_partitions = optional(bool)
+      hive_compatible_partitions = optional(bool, false)
       per_hour_partition         = optional(bool, true)
-    }))
+    }), {})
   })
   default     = null
-  description = "Variables to enable S3 flow logs for the VPC."
+  description = "Variables to enable S3 flow logs for the VPC. Use 'bucket_name' to log to an S3 bucket created by this module. Alternatively, use 'log_destination' to specify a self-managed S3 bucket. The 'log_destination' variable accepts full S3 ARNs, optionally including object keys."
 
   validation {
-    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.bucket_arn, null) != null || try(var.s3_flow_logs_configuration.bucket_name, null) != null)
-    error_message = "Either bucket_arn or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
+    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.log_destination, null) != null || try(var.s3_flow_logs_configuration.bucket_name, null) != null)
+    error_message = "Either log_destination or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
   }
 }
 

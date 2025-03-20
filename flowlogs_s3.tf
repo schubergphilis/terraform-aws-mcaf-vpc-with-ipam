@@ -79,7 +79,7 @@ EOF
 resource "aws_flow_log" "flow_logs_s3" {
   count = local.store_logs_in_s3 ? 1 : 0
 
-  log_destination          = local.create_bucket ? module.log_bucket[count.index].arn : var.s3_flow_logs_configuration.bucket_arn
+  log_destination          = local.create_bucket ? module.log_bucket[count.index].arn : var.s3_flow_logs_configuration.log_destination
   log_destination_type     = "s3"
   log_format               = var.s3_flow_logs_configuration.log_format
   max_aggregation_interval = var.s3_flow_logs_configuration.max_aggregation_interval
