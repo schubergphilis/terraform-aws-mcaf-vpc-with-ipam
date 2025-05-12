@@ -78,7 +78,7 @@ This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/
 | <a name="input_transit_gateway_appliance_mode_support"></a> [transit\_gateway\_appliance\_mode\_support](#input\_transit\_gateway\_appliance\_mode\_support) | Enable to attach the VPC in appliance mode on the Transit Gateway. | `bool` | `false` | no |
 | <a name="input_transit_gateway_id"></a> [transit\_gateway\_id](#input\_transit\_gateway\_id) | Transit Gateway ID. | `string` | `""` | no |
 | <a name="input_transit_gateway_route_table_association"></a> [transit\_gateway\_route\_table\_association](#input\_transit\_gateway\_route\_table\_association) | Transit Gateway route table ID to attach the VPC on. | `string` | `""` | no |
-| <a name="input_transit_gateway_route_table_propagation"></a> [transit\_gateway\_route\_table\_propagation](#input\_transit\_gateway\_route\_table\_propagation) | Transit Gateway route table ID's to propagate the VPC CIDR to. | `list(string)` | `[]` | no |
+| <a name="input_transit_gateway_route_table_propagation"></a> [transit\_gateway\_route\_table\_propagation](#input\_transit\_gateway\_route\_table\_propagation) | Map of [logical name]→[Transit Gateway route table ID] to propagate the VPC CIDR to. | `map(string)` | `{}` | no |
 | <a name="input_vpc_cidr_netmask"></a> [vpc\_cidr\_netmask](#input\_vpc\_cidr\_netmask) | The netmask length of the IPv4 CIDR you want to allocate to this VPC. | `number` | `20` | no |
 
 ## Outputs
