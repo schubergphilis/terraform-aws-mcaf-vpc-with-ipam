@@ -44,7 +44,7 @@ module "vpc" {
 
 module "security_group" {
   source  = "schubergphilis/mcaf-security-group/aws"
-  version = "~> 0.1"
+  version = "~> 2.0"
 
   description = "VPC endpoint security group"
   name_prefix = "vpc-endpoints-"
@@ -52,7 +52,7 @@ module "security_group" {
 
   ingress_rules = {
     ingress_https = {
-      cidr_ipv4   = module.vpc.vpc_cidr_block
+      cidr_ipv4   = [module.vpc.vpc_cidr_block]
       description = "HTTPS from VPC"
       from_port   = 443
       ip_protocol = "tcp"

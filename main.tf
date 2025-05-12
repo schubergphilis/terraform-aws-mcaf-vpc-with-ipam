@@ -163,7 +163,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "default" {
 
 resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
   provider = aws.transit_gateway_account
-  count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
+
+  count = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
   transit_gateway_attachment_id                   = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
   transit_gateway_default_route_table_association = false
@@ -173,7 +174,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "default" {
   provider = aws.transit_gateway_account
-  count    = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
+
+  count = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
   transit_gateway_route_table_id = var.transit_gateway_route_table_association
@@ -183,7 +185,8 @@ resource "aws_ec2_transit_gateway_route_table_association" "default" {
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
   provider = aws.transit_gateway_account
-  for_each = anytrue(var.networks[*].tgw_attachment) ? toset(var.transit_gateway_route_table_propagation) : []
+
+  for_each = anytrue(var.networks[*].tgw_attachment) ? var.transit_gateway_route_table_propagation : {}
 
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
   transit_gateway_route_table_id = each.value

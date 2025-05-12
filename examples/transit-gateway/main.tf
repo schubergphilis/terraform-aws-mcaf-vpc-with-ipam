@@ -27,7 +27,7 @@ module "vpc" {
   aws_vpc_ipam_pool                       = "ipam-pool-1a1a1a1a1a1a1a1a1"
   transit_gateway_id                      = module.transit_gateway.transit_gateway_id
   transit_gateway_route_table_association = module.transit_gateway.transit_gateway_route_table_id["vpc"]
-  transit_gateway_route_table_propagation = module.transit_gateway.transit_gateway_route_table_id["shared"]
+  transit_gateway_route_table_propagation = { shared = module.transit_gateway.transit_gateway_route_table_id["shared"] }
   vpc_cidr_netmask                        = 20
 
   networks = [
