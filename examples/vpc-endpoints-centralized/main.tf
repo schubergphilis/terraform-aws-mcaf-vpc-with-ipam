@@ -44,7 +44,7 @@ module "hub_vpc" {
 
 module "security_group" {
   source  = "schubergphilis/mcaf-security-group/aws"
-  version = "~> 0.1"
+  version = "~> 2.0"
 
   description = "VPC endpoint security group"
   name_prefix = "hub-vpc-endpoints-"
@@ -52,7 +52,7 @@ module "security_group" {
 
   ingress_rules = {
     spoke_vpcs = {
-      cidr_ipv4   = "10.64.0.0/12"
+      cidr_ipv4   = ["10.64.0.0/12"]
       description = "Allow access from all spoke VPCs"
       from_port   = 443
       ip_protocol = "tcp"

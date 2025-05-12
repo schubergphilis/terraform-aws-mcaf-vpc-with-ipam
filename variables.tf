@@ -105,9 +105,9 @@ variable "transit_gateway_route_table_association" {
 }
 
 variable "transit_gateway_route_table_propagation" {
-  type        = list(string)
-  default     = []
-  description = "Transit Gateway route table ID's to propagate the VPC CIDR to."
+  type        = map(string)
+  default     = {}
+  description = "Map of [logical name]→[Transit Gateway route table ID] to propagate the VPC CIDR to."
 }
 
 variable "vpc_cidr_netmask" {
