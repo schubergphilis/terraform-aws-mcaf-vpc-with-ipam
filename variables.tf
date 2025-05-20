@@ -92,6 +92,12 @@ variable "transit_gateway_appliance_mode_support" {
   description = "Enable to attach the VPC in appliance mode on the Transit Gateway."
 }
 
+variable "transit_gateway_enable_accepter" {
+  description = "Set to false to disable the EC2 Transit Gateway VPC Attachment Accepter; this must be false if the VPC and Transit Gateway are in the same AWS account and region."
+  type        = bool
+  default     = true
+}
+
 variable "transit_gateway_id" {
   type        = string
   default     = ""

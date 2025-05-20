@@ -8,6 +8,9 @@ Terraform module to:
 
 This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/schubergphilis/terraform-aws-mcaf-vpc) module in the future.
 
+> [!NOTE]
+> If your VPC and Transit Gateway are in the same AWS account and region, no EC2 Transit Gateway VPC Attachment Accepter can be created as this is automatically accepted. In this scenario set the `transit_gateway_enable_accepter` variable (default: `true`) to `false`. For more details, see [AWS Documentation](https://docs.aws.amazon.com/vpc/latest/tgw/acccept-tgw-attach.html).
+
 ## Usage
 
 <!-- BEGIN_TF_DOCS -->
@@ -76,6 +79,7 @@ This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/
 | <a name="input_s3_flow_logs_configuration"></a> [s3\_flow\_logs\_configuration](#input\_s3\_flow\_logs\_configuration) | Variables to enable S3 flow logs for the VPC. Use 'bucket\_name' to log to an S3 bucket created by this module. Alternatively, use 'log\_destination' to specify a self-managed S3 bucket. The 'log\_destination' variable accepts full S3 ARNs, optionally including object keys. | <pre>object({<br/>    bucket_name              = optional(string)<br/>    kms_key_arn              = string<br/>    log_destination          = optional(string)<br/>    log_format               = optional(string)<br/>    max_aggregation_interval = optional(number, 60)<br/>    retention_in_days        = optional(number, 90)<br/>    traffic_type             = optional(string, "ALL")<br/><br/>    destination_options = optional(object({<br/>      file_format                = optional(string)<br/>      hive_compatible_partitions = optional(bool, false)<br/>      per_hour_partition         = optional(bool, true)<br/>    }), {})<br/>  })</pre> | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
 | <a name="input_transit_gateway_appliance_mode_support"></a> [transit\_gateway\_appliance\_mode\_support](#input\_transit\_gateway\_appliance\_mode\_support) | Enable to attach the VPC in appliance mode on the Transit Gateway. | `bool` | `false` | no |
+| <a name="input_transit_gateway_enable_accepter"></a> [transit\_gateway\_enable\_accepter](#input\_transit\_gateway\_enable\_accepter) | Set to false to disable the EC2 Transit Gateway VPC Attachment Accepter; this must be false if the VPC and Transit Gateway are in the same AWS account and region. | `bool` | `true` | no |
 | <a name="input_transit_gateway_id"></a> [transit\_gateway\_id](#input\_transit\_gateway\_id) | Transit Gateway ID. | `string` | `""` | no |
 | <a name="input_transit_gateway_route_table_association"></a> [transit\_gateway\_route\_table\_association](#input\_transit\_gateway\_route\_table\_association) | Transit Gateway route table ID to attach the VPC on. | `string` | `""` | no |
 | <a name="input_transit_gateway_route_table_propagation"></a> [transit\_gateway\_route\_table\_propagation](#input\_transit\_gateway\_route\_table\_propagation) | Map of [logical name]→[Transit Gateway route table ID] to propagate the VPC CIDR to. | `map(string)` | `{}` | no |
