@@ -8,6 +8,9 @@ Terraform module to:
 
 This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/schubergphilis/terraform-aws-mcaf-vpc) module in the future.
 
+> [!NOTE]
+> If your VPC and Transit Gateway are in the same AWS account and region, no EC2 Transit Gateway VPC Attachment Accepter can be created as this is automatically accepted. In this scenario set the `transit_gateway_enable_accepter` variable (default: `true`) to `false`. For more details, see [AWS Documentation](https://docs.aws.amazon.com/vpc/latest/tgw/acccept-tgw-attach.html).
+
 ## Usage
 
 <!-- BEGIN_TF_DOCS -->

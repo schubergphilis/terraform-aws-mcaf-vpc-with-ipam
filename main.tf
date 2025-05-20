@@ -164,7 +164,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "default" {
 resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
   provider = aws.transit_gateway_account
 
-  count = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
+  count = var.transit_gateway_enable_accepter && anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
   transit_gateway_attachment_id                   = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
   transit_gateway_default_route_table_association = false
