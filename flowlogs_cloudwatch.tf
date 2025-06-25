@@ -10,9 +10,10 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
 resource "aws_iam_role" "vpc_flow_logs" {
   count = var.cloudwatch_flow_logs_configuration != null ? 1 : 0
 
-  name_prefix        = var.cloudwatch_flow_logs_configuration.iam_role_name_prefix
-  assume_role_policy = data.aws_iam_policy_document.vpc_flow_logs_assume_role.json
-  path               = var.cloudwatch_flow_logs_configuration.iam_path
+  name_prefix          = var.cloudwatch_flow_logs_configuration.iam_role_name_prefix
+  assume_role_policy   = data.aws_iam_policy_document.vpc_flow_logs_assume_role.json
+  path                 = var.cloudwatch_flow_logs_configuration.iam_path
+  permissions_boundary = var.cloudwatch_flow_logs_configuration.iam_role_permissions_boundary
 }
 
 data "aws_iam_policy_document" "vpc_flow_logs_assume_role" {
