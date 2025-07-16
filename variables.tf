@@ -1,3 +1,9 @@
+variable "associated_route53_profile_ids" {
+  type = map(string)
+  default = {}
+  description = "A map of Route53 Profile Names to IDs to associate with the VPC."
+}
+
 variable "availability_zones" {
   type        = list(string)
   description = "A list of availability zones names or ids in the region."
