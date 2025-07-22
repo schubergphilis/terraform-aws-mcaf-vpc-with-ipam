@@ -1,4 +1,8 @@
 locals {
+  associated_route53_profile_ids = var.route53_profiles_association.enabled ? {
+    for profile in data.aws_route53profiles_profiles.default[0].profiles :
+    profile.name => profile.id if length(var.route53_profiles_association.names) == 0 || contains(var.route53_profiles_association.names, profile.name)
+  } : {}
   networks = flatten([
     for i, network in var.networks : [
       for az in var.availability_zones : {
@@ -26,6 +30,10 @@ locals {
     tgw_attachment    = n.tgw_attachment
     tags              = n.tags
   }]
+}
+
+data "aws_route53profiles_profiles" "default" {
+  count = var.route53_profiles_association.enabled ? 1 : 0
 }
 
 resource "aws_vpc_ipam_preview_next_cidr" "vpc" {
@@ -199,7 +207,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
 ################################################################################
 
 resource "aws_route53profiles_association" "default" {
-  for_each = var.associated_route53_profile_ids
+  for_each = local.associated_route53_profile_ids
 
   name        = each.key
   profile_id  = each.value
