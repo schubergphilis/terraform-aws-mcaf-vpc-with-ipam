@@ -1,11 +1,12 @@
 variable "route53_profiles_association" {
   type = object({
-    enabled = optional(bool, false)
-    names   = optional(set(string), [])
+    enabled                 = optional(bool, false)
+    association_name_prefix = optional(string, "")
+    profile_names           = optional(set(string), [])
   })
   default     = {}
   nullable    = false
-  description = "Variable to enable Route53 Profiles association. Lookup 'names' of Route53 Profiles in the account to associate with the VPC. If 'names' are not specified, then all Route53 Profiles in the account will be associated to the VPC."
+  description = "Variable to enable Route53 Profiles association. Lookup 'profile_names' of Route53 Profiles in the account to associate with the VPC."
 }
 
 variable "availability_zones" {
