@@ -1,3 +1,16 @@
+variable "route53_profiles_association" {
+  type = object({
+    profiles = optional(map(object(
+      {
+        association_name = string
+      }
+    )), {})
+  })
+  default     = {}
+  nullable    = false
+  description = "Variable to enable Route53 Profiles association. Lookup 'profile_names' of Route53 Profiles in the account to associate with the VPC, and assign arbitrary association names."
+}
+
 variable "availability_zones" {
   type        = list(string)
   description = "A list of availability zones names or ids in the region."
