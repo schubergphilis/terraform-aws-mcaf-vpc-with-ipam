@@ -1,6 +1,6 @@
 locals {
-  associated_route53_profile_ids = var.route53_profiles_association.enabled ? {
-    for profile in data.aws_route53profiles_profiles.default[0].profiles :
+  associated_route53_profile_ids = var.route53_profiles_association != {} ? {
+    for profile in data.aws_route53profiles_profiles.default.profiles :
     "${var.route53_profiles_association.profiles[profile.name]["association_name"]}" => profile.id if contains(keys(var.route53_profiles_association.profiles), profile.name)
   } : {}
   networks = flatten([
@@ -32,9 +32,7 @@ locals {
   }]
 }
 
-data "aws_route53profiles_profiles" "default" {
-  count = var.route53_profiles_association.enabled ? 1 : 0
-}
+data "aws_route53profiles_profiles" "default" {}
 
 resource "aws_vpc_ipam_preview_next_cidr" "vpc" {
   ipam_pool_id   = var.aws_vpc_ipam_pool

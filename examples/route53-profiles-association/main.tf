@@ -27,9 +27,6 @@ module "vpc" {
   ]
 
   route53_profiles_association = {
-    enabled = true
-
-    association_name = "foo-bar"
     profiles = {
       profile-1 = {
         association_name = "association-1"

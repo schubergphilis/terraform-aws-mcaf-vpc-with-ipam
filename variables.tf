@@ -1,7 +1,5 @@
 variable "route53_profiles_association" {
   type = object({
-    enabled                 = optional(bool, false)
-    association_name_prefix = optional(string, "")
     profiles = optional(map(object(
       {
         association_name = string
