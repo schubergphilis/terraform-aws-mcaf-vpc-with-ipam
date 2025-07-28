@@ -29,10 +29,14 @@ module "vpc" {
   route53_profiles_association = {
     enabled = true
 
-    association_name_prefix = "foo-bar-"
-    profile_names = [
-      "profile-1",
-      "profile-2"
-    ]
+    association_name = "foo-bar"
+    profiles = {
+      profile-1 = {
+        association_name = "association-1"
+      }
+      profile-2 = {
+        association_name = "association-2"
+      }
+    }
   }
 }
