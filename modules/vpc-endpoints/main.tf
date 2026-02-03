@@ -141,7 +141,7 @@ resource "aws_vpc_endpoint" "default" {
 resource "aws_route53_zone" "custom_zone" {
   #checkov:skip=CKV2_AWS_39: "Ensure Domain Name System (DNS) query logging is enabled for Amazon Route 53 hosted zones" - Non centralized vpc endpoint zones are also not logged by AWS.
   #checkov:skip=CKV2_AWS_38: "Ensure Domain Name System Security Extensions (DNSSEC) signing is enabled for Amazon Route 53 public hosted zones" - N/A for VPC Endpoints.
-  for_each = local.custom_zones
+  for_each = { for k, v in local.custom_zones : k => v if v }
 
   name          = local.custom_zones_name[each.key]
   force_destroy = false
