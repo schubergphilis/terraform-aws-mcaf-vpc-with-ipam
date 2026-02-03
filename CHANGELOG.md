@@ -5,6 +5,16 @@ All notable changes to this project will automatically be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.1 - 2026-02-03
+
+### What's Changed
+
+#### 🐛 Bug Fixes
+
+* bug: custom zones are always created (#19) @skesarkar-schubergphilis
+
+**Full Changelog**: https://github.com/schubergphilis/terraform-aws-mcaf-vpc-with-ipam/compare/v1.1.0...v1.1.1
+
 ## v1.1.0 - 2025-07-28
 
 ### What's Changed
