@@ -4,9 +4,6 @@ output "endpoints" {
 }
 
 output "custom_route53_zones" {
-  description = "A map of all attributes for each custom DNS zone created, indexed by the endpoint key."
-  value = {
-    for k, v in local.custom_zones :
-    k => aws_route53_zone.custom_zone[k] if v
-  }
+  description = "A map of all attributes for each custom DNS zone created, indexed by the zone key."
+  value       = aws_route53_zone.custom_zone
 }

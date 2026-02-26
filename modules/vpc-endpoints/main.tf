@@ -16,19 +16,43 @@ locals {
 
   ## Custom DNS Zone & Records
 
-  # A custom DNS zone is created if the endpoint is centralized or if the privatelink `dns_zone` is explicitly provided.
-  custom_zones = {
-    for key, endpoint in var.endpoints :
-    key => endpoint.centralized_endpoint || try(endpoint.private_link_dns_options.dns_zone, null) != null
-  }
-
-  # Computes the DNS zone name for each endpoint, either derived from the service name or explicitly provided.
-  # If it's derived from the service name then we we reverse the service name
+  # Computes the ipv4 DNS zone name for each endpoint, either derived from the service name or explicitly provided.
+  # If it's derived from the service name then we reverse the service name
   # (e.g., `com.amazonaws.eu-central-1.sts` becomes `sts.eu-central-1.amazonaws.com`).
-  custom_zones_name = {
+  custom_ipv4_zones_name = {
     for key, endpoint in var.endpoints :
     key => try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(".", reverse(split(".", local.real_service_names[key])))
   }
+
+  # Computes the dualstack DNS zone for each endpoint, derived from the service name.
+  # (e.g., `com.amazonaws.eu-central-1.sts` becomes `sts.eu-central-1.api.aws`).
+  custom_dualstack_zones_name = {
+    for key, endpoint in var.endpoints :
+    key => try(endpoint.private_link_dns_options.dns_zone, null) != null ? null : join(".", concat(
+      reverse(slice(split(".", local.real_service_names[key]), 2, length(split(".", local.real_service_names[key])))),
+      ["api", "aws"]
+    ))
+  }
+
+  # A unified map of all custom DNS zones to create, combining both the ipv4 and dualstack zones.
+  # A custom DNS zone is created if the endpoint is centralized or if the privatelink `dns_zone` is explicitly provided.
+  # Each entry is keyed as "<endpoint_key>" for the ipv4 zone and "<endpoint_key>-dualstack" for the dualstack zone.
+  custom_dns_zones = merge(
+    {
+      for key, endpoint in var.endpoints :
+      key => {
+        endpoint  = key
+        zone_name = local.custom_ipv4_zones_name[key]
+      } if endpoint.centralized_endpoint || try(endpoint.private_link_dns_options.dns_zone, null) != null
+    },
+    {
+      for key, endpoint in var.endpoints :
+      "${key}-dualstack" => {
+        endpoint  = key
+        zone_name = local.custom_dualstack_zones_name[key]
+      } if endpoint.centralized_endpoint && local.custom_dualstack_zones_name[key] != null
+    }
+  )
 
   # Produces a list of Route53 record definitions for each endpoint.
   custom_records = flatten([
@@ -64,6 +88,16 @@ locals {
     # 3) NEITHER => no records at all
     : []
   ])
+
+  # A unified map of all custom DNS records to create, combining records for both the ipv4 and dualstack zones.
+  # Each record is duplicated for every zone key associated with the same endpoint.
+  custom_dns_records = merge([
+    for zone_key, zone in local.custom_dns_zones : {
+      for record in local.custom_records :
+      "${zone_key}-${record.record_name}" => merge(record, { zone_key = zone_key })
+      if record.endpoint == zone.endpoint
+    }
+  ]...)
 }
 
 data "aws_region" "current" {}
@@ -141,15 +175,15 @@ resource "aws_vpc_endpoint" "default" {
 resource "aws_route53_zone" "custom_zone" {
   #checkov:skip=CKV2_AWS_39: "Ensure Domain Name System (DNS) query logging is enabled for Amazon Route 53 hosted zones" - Non centralized vpc endpoint zones are also not logged by AWS.
   #checkov:skip=CKV2_AWS_38: "Ensure Domain Name System Security Extensions (DNSSEC) signing is enabled for Amazon Route 53 public hosted zones" - N/A for VPC Endpoints.
-  for_each = { for k, v in local.custom_zones : k => v if v }
+  for_each = local.custom_dns_zones
 
-  name          = local.custom_zones_name[each.key]
+  name          = each.value.zone_name
   force_destroy = false
   tags          = var.tags
 
   vpc {
     vpc_id     = var.vpc_id
-    vpc_region = try(var.endpoints[each.key].service_region, data.aws_region.current.name)
+    vpc_region = try(var.endpoints[each.value.endpoint].service_region, data.aws_region.current.name)
   }
 
   # Prevent the deletion of associated VPCs after the initial creation.
@@ -160,11 +194,11 @@ resource "aws_route53_zone" "custom_zone" {
 }
 
 resource "aws_route53_record" "custom_dns_record" {
-  for_each = { for record in local.custom_records : "${record.endpoint}-${record.record_name}" => record }
+  for_each = local.custom_dns_records
 
   name    = each.value.record_name
   type    = each.value.record_type
-  zone_id = aws_route53_zone.custom_zone[each.value.endpoint].zone_id
+  zone_id = aws_route53_zone.custom_zone[each.value.zone_key].zone_id
 
   # If alias is true, do not set ttl/records; if alias is false, they must be set.
   ttl     = each.value.alias ? null : each.value.record_ttl
