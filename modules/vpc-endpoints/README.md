@@ -68,6 +68,6 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_custom_route53_zones"></a> [custom\_route53\_zones](#output\_custom\_route53\_zones) | A map of all attributes for each custom DNS zone created, indexed by the endpoint key. |
+| <a name="output_custom_route53_zones"></a> [custom\_route53\_zones](#output\_custom\_route53\_zones) | A map of all attributes for each custom DNS zone created, indexed by the zone key. |
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | A map of the VPC endpoints with their full resource objects and attributes. |
 <!-- END_TF_DOCS -->
