@@ -1,7 +1,7 @@
 locals {
   associated_route53_profile_ids = var.route53_profiles_association != {} ? {
     for profile in data.aws_route53profiles_profiles.default.profiles :
-    "${var.route53_profiles_association.profiles[profile.name]["association_name"]}" => profile.id if contains(keys(var.route53_profiles_association.profiles), profile.name)
+    var.route53_profiles_association.profiles[profile.name]["association_name"] => profile.id if contains(keys(var.route53_profiles_association.profiles), profile.name)
   } : {}
   networks = flatten([
     for i, network in var.networks : [

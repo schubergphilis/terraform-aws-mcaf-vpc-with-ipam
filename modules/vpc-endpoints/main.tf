@@ -19,14 +19,14 @@ locals {
   # Computes the ipv4 DNS zone name for each endpoint, either derived from the service name or explicitly provided.
   # If it's derived from the service name then we reverse the service name
   # (e.g., `com.amazonaws.eu-central-1.sts` becomes `sts.eu-central-1.amazonaws.com`).
-  custom_ipv4_zones_name = {
+  custom_ipv4_zones_names = {
     for key, endpoint in var.endpoints :
     key => try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(".", reverse(split(".", local.real_service_names[key])))
   }
 
   # Computes the dualstack DNS zone for each endpoint, derived from the service name.
   # (e.g., `com.amazonaws.eu-central-1.sts` becomes `sts.eu-central-1.api.aws`).
-  custom_dualstack_zones_name = {
+  custom_dualstack_zones_names = {
     for key, endpoint in var.endpoints :
     key => try(endpoint.private_link_dns_options.dns_zone, null) != null ? null : join(".", concat(
       reverse(slice(split(".", local.real_service_names[key]), 2, length(split(".", local.real_service_names[key])))),
@@ -42,15 +42,15 @@ locals {
       for key, endpoint in var.endpoints :
       key => {
         endpoint  = key
-        zone_name = local.custom_ipv4_zones_name[key]
+        zone_name = local.custom_ipv4_zones_names[key]
       } if endpoint.centralized_endpoint || try(endpoint.private_link_dns_options.dns_zone, null) != null
     },
     {
       for key, endpoint in var.endpoints :
       "${key}-dualstack" => {
         endpoint  = key
-        zone_name = local.custom_dualstack_zones_name[key]
-      } if endpoint.centralized_endpoint && local.custom_dualstack_zones_name[key] != null
+        zone_name = local.custom_dualstack_zones_names[key]
+      } if endpoint.centralized_endpoint && local.custom_dualstack_zones_names[key] != null
     }
   )
 
