@@ -1,8 +1,4 @@
 locals {
-  associated_route53_profile_ids = var.route53_profiles_association != {} ? {
-    for profile in data.aws_route53profiles_profiles.default.profiles :
-    var.route53_profiles_association.profiles[profile.name]["association_name"] => profile.id if contains(keys(var.route53_profiles_association.profiles), profile.name)
-  } : {}
   networks = flatten([
     for i, network in var.networks : [
       for az in var.availability_zones : {
@@ -205,10 +201,10 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
 ################################################################################
 
 resource "aws_route53profiles_association" "default" {
-  for_each = local.associated_route53_profile_ids
+  count = var.route53_profiles_association != null ? 1 : 0
 
-  name        = each.key
-  profile_id  = each.value
+  name        = var.route53_profiles_association.association_name
+  profile_id  = one([for profile in data.aws_route53profiles_profiles.default.profiles : profile.id if profile.name == var.route53_profiles_association.profile_name])
   resource_id = aws_vpc.default.id
 
   tags = var.tags
