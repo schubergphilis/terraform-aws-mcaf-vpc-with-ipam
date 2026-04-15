@@ -27,13 +27,7 @@ module "vpc" {
   ]
 
   route53_profiles_association = {
-    profiles = {
-      profile-1 = {
-        association_name = "association-1"
-      }
-      profile-2 = {
-        association_name = "association-2"
-      }
-    }
+    association_name = "association-1"
+    profile_name     = "profile-1"
   }
 }
