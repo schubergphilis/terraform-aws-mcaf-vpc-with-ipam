@@ -5,10 +5,11 @@ locals {
 
 module "log_bucket" {
   source  = "schubergphilis/mcaf-s3/aws"
-  version = "~> 1.2.0"
+  version = "~> 2.0.0"
 
   count = local.create_bucket ? 1 : 0
 
+  region      = var.region
   name        = var.s3_flow_logs_configuration.bucket_name
   kms_key_arn = var.s3_flow_logs_configuration.kms_key_arn
   tags        = var.tags
@@ -50,7 +51,7 @@ module "log_bucket" {
                     "s3:x-amz-acl": "bucket-owner-full-control"
                 },
                 "ArnLike": {
-                    "aws:SourceArn": "arn:aws:logs:${data.aws_region.default.name}:${data.aws_caller_identity.default.account_id}:*"
+                    "aws:SourceArn": "arn:aws:logs:${local.region}:${data.aws_caller_identity.default.account_id}:*"
                 }
             }
         },
@@ -67,7 +68,7 @@ module "log_bucket" {
                     "aws:SourceAccount": "${data.aws_caller_identity.default.account_id}"
                 },
                 "ArnLike": {
-                    "aws:SourceArn": "arn:aws:logs:${data.aws_region.default.name}:${data.aws_caller_identity.default.account_id}:*"
+                    "aws:SourceArn": "arn:aws:logs:${local.region}:${data.aws_caller_identity.default.account_id}:*"
                 }
             }
         }
@@ -79,6 +80,7 @@ EOF
 resource "aws_flow_log" "flow_logs_s3" {
   count = local.store_logs_in_s3 ? 1 : 0
 
+  region                   = var.region
   log_destination          = local.create_bucket ? module.log_bucket[count.index].arn : var.s3_flow_logs_configuration.log_destination
   log_destination_type     = "s3"
   log_format               = var.s3_flow_logs_configuration.log_format
