@@ -19,20 +19,20 @@ This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.82 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.82 |
-| <a name="provider_aws.transit_gateway_account"></a> [aws.transit\_gateway\_account](#provider\_aws.transit\_gateway\_account) | >= 5.82 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
+| <a name="provider_aws.transit_gateway_account"></a> [aws.transit\_gateway\_account](#provider\_aws.transit\_gateway\_account) | >= 6.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_log_bucket"></a> [log\_bucket](#module\_log\_bucket) | schubergphilis/mcaf-s3/aws | ~> 1.2.0 |
+| <a name="module_log_bucket"></a> [log\_bucket](#module\_log\_bucket) | schubergphilis/mcaf-s3/aws | ~> 2.0.0 |
 
 ## Resources
 
@@ -78,6 +78,7 @@ This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/
 | <a name="input_cloudwatch_flow_logs_configuration"></a> [cloudwatch\_flow\_logs\_configuration](#input\_cloudwatch\_flow\_logs\_configuration) | Cloudwatch flow logs configuration | <pre>object({<br/>    iam_path                      = optional(string, "/")<br/>    iam_policy_name_prefix        = optional(string, "vpc-flow-logs-to-cloudwatch-")<br/>    iam_role_name_prefix          = optional(string, "vpc-flow-logs-role-")<br/>    iam_role_permissions_boundary = optional(string)<br/>    kms_key_arn                   = string<br/>    log_format                    = optional(string)<br/>    log_group_name                = optional(string)<br/>    max_aggregation_interval      = optional(number, 60)<br/>    retention_in_days             = optional(number, 90)<br/>    traffic_type                  = optional(string, "ALL")<br/>  })</pre> | `null` | no |
 | <a name="input_enable_dns_hostnames"></a> [enable\_dns\_hostnames](#input\_enable\_dns\_hostnames) | Enable DNS hostnames in the VPC. | `bool` | `true` | no |
 | <a name="input_manage_default_vpc"></a> [manage\_default\_vpc](#input\_manage\_default\_vpc) | Should be true to adopt and manage the default VPC. | `bool` | `true` | no |
+| <a name="input_region"></a> [region](#input\_region) | The AWS region where resources will be created; if omitted the default provider region is used | `string` | `null` | no |
 | <a name="input_route53_profiles_association"></a> [route53\_profiles\_association](#input\_route53\_profiles\_association) | Variable to enable Route53 Profile association. Specify the 'profile\_name' of a Route53 Profile in the account to associate with the VPC, and an arbitrary 'association\_name'. Note: AWS only supports one Route53 Profile per VPC. | <pre>object({<br/>    association_name = string<br/>    profile_name     = string<br/>  })</pre> | `null` | no |
 | <a name="input_s3_flow_logs_configuration"></a> [s3\_flow\_logs\_configuration](#input\_s3\_flow\_logs\_configuration) | Variables to enable S3 flow logs for the VPC. Use 'bucket\_name' to log to an S3 bucket created by this module. Alternatively, use 'log\_destination' to specify a self-managed S3 bucket. The 'log\_destination' variable accepts full S3 ARNs, optionally including object keys. | <pre>object({<br/>    bucket_name              = optional(string)<br/>    kms_key_arn              = string<br/>    log_destination          = optional(string)<br/>    log_format               = optional(string)<br/>    max_aggregation_interval = optional(number, 60)<br/>    retention_in_days        = optional(number, 90)<br/>    traffic_type             = optional(string, "ALL")<br/><br/>    destination_options = optional(object({<br/>      file_format                = optional(string)<br/>      hive_compatible_partitions = optional(bool, false)<br/>      per_hour_partition         = optional(bool, true)<br/>    }), {})<br/>  })</pre> | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
