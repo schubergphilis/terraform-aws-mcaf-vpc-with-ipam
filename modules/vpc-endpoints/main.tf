@@ -122,6 +122,7 @@ data "aws_vpc_endpoint_service" "default" {
 resource "aws_vpc_endpoint" "default" {
   for_each = var.endpoints
 
+  region              = var.region
   auto_accept         = each.value.auto_accept
   ip_address_type     = each.value.ip_address_type
   policy              = each.value.policy
@@ -183,7 +184,7 @@ resource "aws_route53_zone" "custom_zone" {
 
   vpc {
     vpc_id     = var.vpc_id
-    vpc_region = try(var.endpoints[each.value.endpoint].service_region, data.aws_region.current.name)
+    vpc_region = try(var.endpoints[each.value.endpoint].service_region, coalesce(var.region, data.aws_region.current.region))
   }
 
   # Prevent the deletion of associated VPCs after the initial creation.

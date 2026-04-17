@@ -15,6 +15,7 @@ locals {
   )
 
   cidr_subnets = cidrsubnets(aws_vpc_ipam_preview_next_cidr.vpc.cidr, local.networks[*].new_bits...)
+  region       = var.region != null ? var.region : data.aws_region.default.region
 
   vpc_subnets = [for i, n in local.networks : {
     availability_zone = n.availability_zone
@@ -28,9 +29,8 @@ locals {
   }]
 }
 
-data "aws_route53profiles_profiles" "default" {}
-
 resource "aws_vpc_ipam_preview_next_cidr" "vpc" {
+  region         = var.region
   ipam_pool_id   = var.aws_vpc_ipam_pool
   netmask_length = var.vpc_cidr_netmask
 }
@@ -40,6 +40,7 @@ resource "aws_vpc_ipam_preview_next_cidr" "vpc" {
 ################################################################################
 
 resource "aws_vpc" "default" {
+  region                               = var.region
   enable_dns_hostnames                 = var.enable_dns_hostnames
   enable_dns_support                   = true
   enable_network_address_usage_metrics = true
@@ -50,6 +51,7 @@ resource "aws_vpc" "default" {
 }
 
 resource "aws_default_security_group" "workload_vpc" {
+  region = var.region
   vpc_id = aws_vpc.default.id
 }
 
@@ -60,6 +62,7 @@ resource "aws_default_security_group" "workload_vpc" {
 resource "aws_subnet" "default" {
   for_each = { for subnet in local.vpc_subnets : subnet.key => subnet }
 
+  region                  = var.region
   availability_zone       = each.value.availability_zone
   cidr_block              = each.value.cidr_block
   map_public_ip_on_launch = each.value.public ? true : false
@@ -71,6 +74,7 @@ resource "aws_subnet" "default" {
 resource "aws_route_table" "default" {
   for_each = { for subnet in local.vpc_subnets : subnet.key => subnet }
 
+  region = var.region
   vpc_id = aws_vpc.default.id
 
   tags = merge({ "Name" = each.key }, var.tags)
@@ -79,6 +83,7 @@ resource "aws_route_table" "default" {
 resource "aws_route_table_association" "default" {
   for_each = { for subnet in local.vpc_subnets : subnet.key => subnet }
 
+  region         = var.region
   subnet_id      = aws_subnet.default[each.key].id
   route_table_id = aws_route_table.default[each.key].id
 }
@@ -90,6 +95,7 @@ resource "aws_route_table_association" "default" {
 resource "aws_internet_gateway" "default" {
   count = anytrue(var.networks[*].public) ? 1 : 0
 
+  region = var.region
   vpc_id = aws_vpc.default.id
 
   tags = merge({ "Name" = var.name }, var.tags)
@@ -98,6 +104,7 @@ resource "aws_internet_gateway" "default" {
 resource "aws_route" "internet_gateway" {
   for_each = { for subnet in local.vpc_subnets : subnet.key => subnet if subnet.public }
 
+  region                 = var.region
   route_table_id         = aws_route_table.default[each.key].id
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.default[0].id
@@ -110,6 +117,7 @@ resource "aws_route" "internet_gateway" {
 resource "aws_eip" "nat_gw" {
   for_each = { for subnet in local.vpc_subnets : subnet.key => subnet if subnet.nat_gw }
 
+  region = var.region
   domain = "vpc"
 
   tags = merge({ "Name" = "nat-gw_${each.key}" }, var.tags)
@@ -118,6 +126,7 @@ resource "aws_eip" "nat_gw" {
 resource "aws_nat_gateway" "public" {
   for_each = { for subnet in local.vpc_subnets : subnet.key => subnet if subnet.nat_gw }
 
+  region        = var.region
   allocation_id = aws_eip.nat_gw[each.key].id
   subnet_id     = aws_subnet.default[each.key].id
 
@@ -132,12 +141,14 @@ resource "aws_default_vpc" "default" {
   #checkov:skip=CKV_AWS_148: "False positive the default VPC is managed by default in the account"
   count = var.manage_default_vpc ? 1 : 0
 
-  tags = merge({ "Name" = "default" }, var.tags)
+  region = var.region
+  tags   = merge({ "Name" = "default" }, var.tags)
 }
 
 resource "aws_default_security_group" "default_vpc" {
   count = var.manage_default_vpc ? 1 : 0
 
+  region = var.region
   vpc_id = aws_default_vpc.default[0].id
 }
 
@@ -148,6 +159,7 @@ resource "aws_default_security_group" "default_vpc" {
 resource "aws_ec2_transit_gateway_vpc_attachment" "default" {
   count = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
+  region                                          = var.region
   appliance_mode_support                          = var.transit_gateway_appliance_mode_support ? "enable" : "disable"
   subnet_ids                                      = [for subnet in local.vpc_subnets : aws_subnet.default[subnet.key].id if subnet.tgw_attachment]
   transit_gateway_default_route_table_association = false
@@ -168,6 +180,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "default" {
 
   count = var.transit_gateway_enable_accepter && anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
+  region                                          = var.region
   transit_gateway_attachment_id                   = aws_ec2_transit_gateway_vpc_attachment.default[count.index].id
   transit_gateway_default_route_table_association = false
   transit_gateway_default_route_table_propagation = false
@@ -179,6 +192,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "default" {
 
   count = anytrue(var.networks[*].tgw_attachment) ? 1 : 0
 
+  region                         = var.region
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
   transit_gateway_route_table_id = var.transit_gateway_route_table_association
 
@@ -190,6 +204,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
 
   for_each = anytrue(var.networks[*].tgw_attachment) ? var.transit_gateway_route_table_propagation : {}
 
+  region                         = var.region
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.default[0].id
   transit_gateway_route_table_id = each.value
 
@@ -203,6 +218,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "default" {
 resource "aws_route53profiles_association" "default" {
   count = var.route53_profiles_association != null ? 1 : 0
 
+  region      = var.region
   name        = var.route53_profiles_association.association_name
   profile_id  = one([for profile in data.aws_route53profiles_profiles.default.profiles : profile.id if profile.name == var.route53_profiles_association.profile_name])
   resource_id = aws_vpc.default.id

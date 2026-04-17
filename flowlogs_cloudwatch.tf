@@ -1,6 +1,7 @@
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   count = var.cloudwatch_flow_logs_configuration != null ? 1 : 0
 
+  region            = var.region
   name              = try(var.cloudwatch_flow_logs_configuration.log_group_name, "/ep/${var.name}-flow-logs")
   kms_key_id        = var.cloudwatch_flow_logs_configuration.kms_key_arn
   retention_in_days = var.cloudwatch_flow_logs_configuration.retention_in_days
@@ -57,13 +58,14 @@ data "aws_iam_policy_document" "vpc_flow_log" {
       "logs:DescribeLogStreams",
     ]
 
-    resources = ["arn:aws:logs:${data.aws_region.default.name}:${data.aws_caller_identity.default.account_id}:log-group:*:*"]
+    resources = ["arn:aws:logs:${local.region}:${data.aws_caller_identity.default.account_id}:log-group:*:*"]
   }
 }
 
 resource "aws_flow_log" "default" {
   count = var.cloudwatch_flow_logs_configuration != null ? 1 : 0
 
+  region                   = var.region
   iam_role_arn             = aws_iam_role.vpc_flow_logs[0].arn
   log_destination          = aws_cloudwatch_log_group.vpc_flow_logs[0].arn
   log_format               = var.cloudwatch_flow_logs_configuration.log_format
