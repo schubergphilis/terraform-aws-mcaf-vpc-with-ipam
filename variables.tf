@@ -5,6 +5,11 @@ variable "route53_profiles_association" {
   })
   default     = null
   description = "Variable to enable Route53 Profile association. Specify the 'profile_id' of a Route53 Profile in the account to associate with the VPC, and an arbitrary 'association_name'. Note: AWS only supports one Route53 Profile per VPC."
+
+  validation {
+    condition     = var.route53_profiles_association == null ? true : (can(regex("^[a-zA-Z0-9\\-_ ']+$", var.route53_profiles_association.association_name)) && !can(regex("^[0-9]+$", var.route53_profiles_association.association_name)))
+    error_message = "association_name must match (?!^[0-9]+$)([a-zA-Z0-9\\-_ ']+) (not purely numeric)."
+  }
 }
 
 variable "availability_zones" {

@@ -8,7 +8,7 @@ This document captures required refactoring on your part when upgrading to a mod
 
 ### Variables
 
-The `route53_profiles_association` variable has been updated: the `profile_name` attribute has been replaced by `profile_id`. Instead of providing a profile name, you now need to provide the Route53 Profile ID directly. The variable structure changed from:
+The `route53_profiles_association` variable has been updated: the `profile_name` attribute has been replaced by `profile_id`. Instead of providing a profile name, you now need to provide the Route53 Profile ID directly to prevent 'known after apply' issues. The variable structure changed from:
 
 ```hcl
 # Old structure
