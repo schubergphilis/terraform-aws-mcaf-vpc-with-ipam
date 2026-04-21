@@ -28,6 +28,6 @@ module "vpc" {
 
   route53_profiles_association = {
     association_name = "association-1"
-    profile_name     = "profile-1"
+    profile_id       = "rp-1a1a1a1a1a1a1a"
   }
 }
