@@ -1,10 +1,10 @@
 variable "route53_profiles_association" {
   type = object({
     association_name = string
-    profile_name     = string
+    profile_id       = string
   })
   default     = null
-  description = "Variable to enable Route53 Profile association. Specify the 'profile_name' of a Route53 Profile in the account to associate with the VPC, and an arbitrary 'association_name'. Note: AWS only supports one Route53 Profile per VPC."
+  description = "Variable to enable Route53 Profile association. Specify the 'profile_id' of a Route53 Profile in the account to associate with the VPC, and an arbitrary 'association_name'. Note: AWS only supports one Route53 Profile per VPC."
 }
 
 variable "availability_zones" {

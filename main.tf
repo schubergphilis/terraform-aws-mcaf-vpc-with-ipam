@@ -220,7 +220,7 @@ resource "aws_route53profiles_association" "default" {
 
   region      = var.region
   name        = var.route53_profiles_association.association_name
-  profile_id  = one([for profile in data.aws_route53profiles_profiles.default.profiles : profile.id if profile.name == var.route53_profiles_association.profile_name])
+  profile_id  = var.route53_profiles_association.profile_id
   resource_id = aws_vpc.default.id
 
   tags = var.tags

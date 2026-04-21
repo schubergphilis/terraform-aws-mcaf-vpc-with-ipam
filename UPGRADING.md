@@ -2,6 +2,29 @@
 
 This document captures required refactoring on your part when upgrading to a module version that contains breaking changes.
 
+## Upgrading to v4.0.0
+
+### Key Changes v4.0.0
+
+### Variables
+
+The `route53_profiles_association` variable has been updated: the `profile_name` attribute has been replaced by `profile_id`. Instead of providing a profile name, you now need to provide the Route53 Profile ID directly. The variable structure changed from:
+
+```hcl
+# Old structure
+route53_profiles_association = {
+  profile_name     = "profile-name"
+  association_name = "association-name"
+}
+
+# New structure
+route53_profiles_association = {
+  profile_id       = "rp-1a1a1a1a1a1a1a"
+  association_name = "association-name"
+}
+```
+
+
 ## Upgrading to v3.0.0
 
 ### Key Changes v3.0.0
