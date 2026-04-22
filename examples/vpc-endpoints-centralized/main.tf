@@ -66,6 +66,7 @@ module "hub_vpc_endpoints" {
 
   endpoints          = local.endpoints
   security_group_ids = [module.security_group.id]
+  route53_profile_id = "rp-1a1a1a1a1a1a1a"
   subnet_ids         = module.hub_vpc.subnet_ids["private"]
   vpc_id             = module.hub_vpc.vpc_id
 }

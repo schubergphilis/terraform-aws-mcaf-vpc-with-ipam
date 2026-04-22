@@ -65,6 +65,17 @@ variable "region" {
   description = "The AWS region where resources will be created; if omitted the default provider region is used"
 }
 
+variable "route53_profile_id" {
+  type        = string
+  default     = null
+  description = "The Route53 profile ID to use for managing centralized Interface endpoints"
+
+  validation {
+    condition     = alltrue([for endpoint in values(var.endpoints) : endpoint.centralized_endpoint != true]) || var.route53_profile_id != null
+    error_message = "var.route53_profile_id must not be null when any endpoint has 'centralized_endpoint' set to true."
+  }
+}
+
 variable "security_group_ids" {
   type        = list(string)
   default     = []
