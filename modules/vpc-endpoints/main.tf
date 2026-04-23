@@ -215,3 +215,16 @@ resource "aws_route53_record" "custom_dns_record" {
     }
   }
 }
+
+########################################################################
+# Route53 profile resource association
+########################################################################
+
+resource "aws_route53profiles_resource_association" "custom_zone_association" {
+  for_each = local.custom_dns_zones
+
+  region       = var.region
+  name         = aws_route53_zone.custom_zone[each.key].name
+  profile_id   = var.route53_profile_id
+  resource_arn = aws_route53_zone.custom_zone[each.key].arn
+}
