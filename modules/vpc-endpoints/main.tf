@@ -224,7 +224,7 @@ resource "aws_route53profiles_resource_association" "custom_zone_association" {
   for_each = local.custom_dns_zones
 
   region       = var.region
-  name         = aws_route53_zone.custom_zone[each.key].name
+  name         = substr(replace(aws_route53_zone.custom_zone[each.key].name, "/[^a-zA-Z0-9\\-_ ]/", "-"), 0, 64)
   profile_id   = var.route53_profile_id
   resource_arn = aws_route53_zone.custom_zone[each.key].arn
 }
