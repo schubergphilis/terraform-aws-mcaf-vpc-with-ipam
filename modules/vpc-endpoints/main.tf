@@ -182,11 +182,6 @@ resource "aws_route53_zone" "custom_zone" {
   force_destroy = false
   tags          = var.tags
 
-  vpc {
-    vpc_id     = var.vpc_id
-    vpc_region = try(var.endpoints[each.value.endpoint].service_region, coalesce(var.region, data.aws_region.current.region))
-  }
-
   # Prevent the deletion of associated VPCs after the initial creation.
   # See documentation on aws_route53_zone_association for details.
   lifecycle {
