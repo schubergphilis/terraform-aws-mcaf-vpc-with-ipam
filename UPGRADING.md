@@ -5,6 +5,7 @@ This document captures required refactoring on your part when upgrading to a mod
 ## Upgrading to v5.0.0
 
 This is the first step towards centralizing Interface endpoints using Route53 Profiles. Follow-up changes will be introduced in subsequent releases.
+See the [migration guide](MIGRATION.md) for detailed instructions on how to migrate your existing centralized endpoints to use Route53 Profiles.
 
 ### Key Changes v5.0.0
 

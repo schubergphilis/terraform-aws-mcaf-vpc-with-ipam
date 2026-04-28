@@ -7,7 +7,7 @@ This guide walks you through the steps to migrate centralized VPC endpoints to u
 - You must be on **v4.0.0** of this module before starting the migration.
 - A Route53 Profile must already exist in your hub account, shared with the spoke accounts via AWS RAM, and associated with the relevant VPCs (you will need its ID, e.g. `rp-1a1a1a1a1a1`).
 
-## Step 1: Upgrade to v5.0.0
+## Step 1: Upgrade to v5.0.1
 
 v5.0.0 introduces a new `route53_profile_id` variable on the `vpc-endpoints` submodule. When provided, all existing custom DNS zones (both ipv4 and dualstack) created by the submodule will be associated with the specified Route53 Profile.
 
