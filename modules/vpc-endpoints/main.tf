@@ -7,11 +7,16 @@ locals {
     key => coalesce(endpoint.service_full_name, try(data.aws_vpc_endpoint_service.default[key].service_name, null))
   }
 
-  # Private DNS is disabled for centralized endpoints, endpoints with a custom privatelink dns_zone, or non-Interface endpoint types.
+  # Private DNS is disabled for non-Interface endpoint types and when a custom privatelink dns zone is specified.
+  # For centralized Interface endpoints (without a custom dns_zone), it is enabled.
   # Otherwise, it uses the value from `private_dns_enabled` for the endpoint.
   private_dns_enabled = {
     for key, endpoint in var.endpoints :
-    key => (endpoint.centralized_endpoint || try(endpoint.private_link_dns_options.dns_zone != null, false) || endpoint.type != "Interface") ? false : endpoint.private_dns_enabled
+    key => endpoint.type != "Interface" ? false : (
+      try(endpoint.private_link_dns_options.dns_zone, null) != null ? false : (
+        endpoint.centralized_endpoint ? true : endpoint.private_dns_enabled
+      )
+    )
   }
 
   ## Custom DNS Zone & Records

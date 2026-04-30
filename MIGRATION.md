@@ -104,3 +104,8 @@ aws route53 list-hosted-zones-by-vpc \
 ```
 
 If the output is empty, all VPC endpoint zones have been successfully disassociated. If you still see associations, you can safely re-run the disassociation script it is idempotent and will skip zones that are already disassociated.
+
+
+## Step 2: Upgrade to v5.2.0
+
+v5.2.0 enables private DNS for all centralized endpoints by default, which is a requirement for using Route53 Profiles. After upgrading, the hub vpc dns resolves through its AWS-managed private hosted zone (which runs in the background) while spoke vpcs continue DNS resolution through direct association with self-managed private hosted zones.

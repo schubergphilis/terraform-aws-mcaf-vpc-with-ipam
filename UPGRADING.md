@@ -4,20 +4,11 @@ This document captures required refactoring on your part when upgrading to a mod
 
 ## Upgrading to v5.0.0
 
-This is the first step towards centralizing Interface endpoints using Route53 Profiles. Follow-up changes will be introduced in subsequent releases.
+> **⚠️ WARNING: You must strictly follow the [migration guide](MIGRATION.md) and upgrade through each minor version (v5.0.0 → v5.1.0 → v5.2.0) in order. Skipping versions may result in DNS resolution failures. Do not jump directly to the latest v5.x release.**
+
+v5.0 provides a migration path for centralizing Interface endpoints using Route53 Profiles. The migration is split across multiple minor releases and must be followed in order.
+
 See the [migration guide](MIGRATION.md) for detailed instructions on how to migrate your existing centralized endpoints to use Route53 Profiles.
-
-### Key Changes v5.0.0
-
-### VPC Endpoints submodule
-
-#### New variable: `route53_profile_id`
-
-A new variable `route53_profile_id` has been added to the `vpc-endpoints` submodule. This variable is **required** when any endpoint has `centralized_endpoint` set to `true`. It accepts the Route53 Profile ID used for associating custom DNS zones.
-
-All custom DNS zones created by the submodule (both ipv4 and dualstack) are now automatically associated with the specified Route53 Profile via `aws_route53profiles_resource_association`.
-
-If none of your endpoints use `centralized_endpoint = true`, `route53_profile_id` can remain unset (`null`).
 
 
 ## Upgrading to v4.0.0
