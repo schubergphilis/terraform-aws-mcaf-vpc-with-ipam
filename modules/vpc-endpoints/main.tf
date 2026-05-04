@@ -224,7 +224,11 @@ resource "aws_route53_record" "custom_dns_record" {
 ########################################################################
 
 resource "aws_route53profiles_resource_association" "custom_zone_association" {
-  for_each = local.custom_dns_zones
+  for_each = {
+    for key, zone in local.custom_dns_zones :
+    key => zone if try(var.endpoints[zone.endpoint].private_link_dns_options.dns_zone, null) != null ||
+    can(regex("dynamodb", local.real_service_names[zone.endpoint]))
+  }
 
   region       = var.region
   name         = substr(replace(aws_route53_zone.custom_zone[each.key].name, "/[^a-zA-Z0-9\\-_ ]/", "-"), 0, 64)
