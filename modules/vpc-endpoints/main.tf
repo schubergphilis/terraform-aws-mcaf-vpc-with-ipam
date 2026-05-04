@@ -7,14 +7,17 @@ locals {
     key => coalesce(endpoint.service_full_name, try(data.aws_vpc_endpoint_service.default[key].service_name, null))
   }
 
-  # Private DNS is disabled for non-Interface endpoint types and when a custom privatelink dns zone is specified.
+  # Private DNS is disabled for non-Interface endpoint types, when a custom privatelink dns_zone is specified,
+  # and for DynamoDB endpoints (which do not support private DNS). https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/privatelink-interface-endpoints.html#privatelink-considerations
   # For centralized Interface endpoints (without a custom dns_zone), it is enabled.
   # Otherwise, it uses the value from `private_dns_enabled` for the endpoint.
   private_dns_enabled = {
     for key, endpoint in var.endpoints :
     key => endpoint.type != "Interface" ? false : (
       try(endpoint.private_link_dns_options.dns_zone, null) != null ? false : (
-        endpoint.centralized_endpoint ? true : endpoint.private_dns_enabled
+        can(regex("dynamodb", local.real_service_names[key])) ? false : (
+          endpoint.centralized_endpoint ? true : endpoint.private_dns_enabled
+        )
       )
     )
   }
