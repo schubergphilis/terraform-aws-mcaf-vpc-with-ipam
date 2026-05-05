@@ -235,3 +235,15 @@ resource "aws_route53profiles_resource_association" "custom_zone_association" {
   profile_id   = var.route53_profile_id
   resource_arn = aws_route53_zone.custom_zone[each.key].arn
 }
+
+resource "aws_route53profiles_resource_association" "interface_endpoint_association" {
+  for_each = {
+    for key, endpoint in var.endpoints :
+    key => endpoint if endpoint.type == "Interface" && try(endpoint.private_link_dns_options.dns_zone, null) == null && endpoint.centralized_endpoint && !can(regex("dynamodb", local.real_service_names[key]))
+  }
+
+  region       = var.region
+  name         = substr(replace(each.key, "/[^a-zA-Z0-9\\-_ ]/", "-"), 0, 64)
+  profile_id   = var.route53_profile_id
+  resource_arn = aws_vpc_endpoint.default[each.key].arn
+}

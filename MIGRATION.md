@@ -116,3 +116,10 @@ v5.2.1 enables private DNS for all centralized endpoints by default, which is a 
 v5.3.0 disassociates the custom DNS zones for centralized endpoints from the Route53 Profile. DNS resolution continues functioning because the spoke VPCs remain associated with the custom DNS zones through direct VPC association.
 
 > **Note:** Custom DNS zones for DynamoDB endpoints and endpoints with `private_link_dns_options.dns_zone` configured remain associated with the Route53 Profile. These endpoints do not support private DNS, so the Route53 Profile association is still required for DNS resolution in spoke VPCs.
+
+
+## Step 4: Upgrade to v5.4.0
+
+v5.4.0 associates centralised interface endpoints with Route53 profile.
+
+> **Note:** Interface endpoints with `private_link_dns_options.dns_zone` configured and DynamoDB endpoints are not associated with the Route53 Profile. These endpoints rely on custom DNS zones which remain associated with the Route53 Profile.
