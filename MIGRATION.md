@@ -24,13 +24,13 @@ module "vpc_endpoints" {
 }
 ```
 
-### 1.1: Disassociate the hub VPC from all custom zones
+### 1.1: Disassociate the hub VPC from all custom zones (excluding DynamoDB)
 
 Since the `aws_route53_zone` resource has `ignore_changes = [vpc]`, Terraform cannot remove the inline VPC association.
 
 > **⚠️ IMPORTANT: You must disassociate the hub VPC manually using the AWS CLI only after upgrading to v5.1.0 and applying the changes.**
 
-Use the following script to list all private hosted zones associated with the hub VPC and disassociate them. The script filters zones by a name pattern to ensure only the relevant endpoint zones are targeted.
+Use the following script to list all private hosted zones associated with the hub VPC and disassociate them. The script filters zones by a name pattern to ensure only the relevant endpoint zones are targeted, and excludes DynamoDB zones (which must remain associated with the VPC).
 
 ```bash
 #!/bin/bash
@@ -38,7 +38,8 @@ Use the following script to list all private hosted zones associated with the hu
 # Example: ./disassociate_vpc.sh vpc-0abc123def456 eu-central-1 my-aws-profile
 #
 # This script lists all private hosted zones associated with the hub VPC
-# and disassociates only VPC endpoint zones (zones ending in .amazonaws.com. or .api.aws.).
+# and disassociates only VPC endpoint zones (zones ending in .amazonaws.com. or .api.aws.),
+# excluding DynamoDB zones.
 
 set -euo pipefail
 
@@ -66,6 +67,12 @@ echo "${ZONES}" | while read -r ZONE_ID ZONE_NAME; do
   # Only target VPC endpoint zones (ending in .amazonaws.com. or .api.aws.)
   if ! echo "${ZONE_NAME}" | grep -qE '\.(amazonaws\.com|api\.aws)\.$'; then
     echo "Skipping zone ${ZONE_NAME} (${ZONE_ID}) - not a VPC endpoint zone"
+    continue
+  fi
+
+  # Skip DynamoDB zones (they must remain associated with the VPC)
+  if echo "${ZONE_NAME}" | grep -qi 'dynamodb'; then
+    echo "Skipping zone ${ZONE_NAME} (${ZONE_ID}) - DynamoDB zone must remain associated"
     continue
   fi
 
@@ -103,7 +110,11 @@ aws route53 list-hosted-zones-by-vpc \
   --output table
 ```
 
-If the output is empty, all VPC endpoint zones have been successfully disassociated. If you still see associations, you can safely re-run the disassociation script it is idempotent and will skip zones that are already disassociated.
+If the output is empty, all VPC endpoint zones have been successfully disassociated. If you still see associations, you can safely re-run the disassociation script—it is idempotent and will skip zones that are already disassociated.
+
+> **Why might you need to run the script again?**
+>
+> AWS Route 53 may take some time to process disassociation requests, especially if you have a large number of hosted zones. If you run the verification command immediately after the script, some associations may still appear as pending removal. Wait a few minutes and re-run the script if needed. The script is safe to run multiple times and will only attempt to disassociate zones that are still associated with the VPC.
 
 
 ## Step 2: Upgrade to v5.2.1
@@ -123,3 +134,18 @@ v5.3.0 disassociates the custom DNS zones for centralized endpoints from the Rou
 v5.4.0 associates centralised interface endpoints with Route53 profile.
 
 > **Note:** Interface endpoints with `private_link_dns_options.dns_zone` configured and DynamoDB endpoints are not associated with the Route53 Profile. These endpoints rely on custom DNS zones which remain associated with the Route53 Profile.
+
+
+## Step 5: Upgrade to v5.5.0
+
+v5.5.0 removes all redundant custom DNS zones for centralized endpoints. DNS resolution for interface vpc endpoints is now fully handled by the Route53 Profile.
+
+> **⚠️ IMPORTANT: You must complete Step 5.1 before upgrading the module in Step 5.2.**
+
+### 5.1: Remove spoke VPC associations from custom DNS zones
+
+Before upgrading, you must remove all spoke VPC direct associations with the custom DNS zones. However, you must keep **one** VPC association per zone, since Route53 private hosted zones must be associated with at least one VPC to exist.
+
+### 5.2: Upgrade to v5.5.0
+
+After completing Step 5.1, upgrade the module to v5.5.0. This version deletes all redundant custom DNS zones. When a zone is deleted, the remaining VPC association (kept in Step 5.1) is automatically removed along with it.

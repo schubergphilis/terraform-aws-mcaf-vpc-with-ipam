@@ -26,39 +26,43 @@ locals {
 
   # Computes the ipv4 DNS zone name for each endpoint, either derived from the service name or explicitly provided.
   # If it's derived from the service name then we reverse the service name
-  # (e.g., `com.amazonaws.eu-central-1.sts` becomes `sts.eu-central-1.amazonaws.com`).
+  # (e.g., `com.amazonaws.eu-central-1.dynamodb` becomes `dynamodb.eu-central-1.amazonaws.com`).
+  # Only computed for endpoints with a privatelink `dns_zone` explicitly provided or DynamoDB endpoints.
   custom_ipv4_zones_names = {
     for key, endpoint in var.endpoints :
     key => try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(".", reverse(split(".", local.real_service_names[key])))
+    if try(endpoint.private_link_dns_options.dns_zone, null) != null || can(regex("dynamodb", local.real_service_names[key]))
   }
 
   # Computes the dualstack DNS zone for each endpoint, derived from the service name.
-  # (e.g., `com.amazonaws.eu-central-1.sts` becomes `sts.eu-central-1.api.aws`).
+  # (e.g., `com.amazonaws.eu-central-1.dynamodb` becomes `dynamodb.eu-central-1.api.aws`).
+  # Only computed for DynamoDB endpoints.
   custom_dualstack_zones_names = {
     for key, endpoint in var.endpoints :
-    key => try(endpoint.private_link_dns_options.dns_zone, null) != null ? null : join(".", concat(
+    key => join(".", concat(
       reverse(slice(split(".", local.real_service_names[key]), 2, length(split(".", local.real_service_names[key])))),
       ["api", "aws"]
     ))
+    if can(regex("dynamodb", local.real_service_names[key]))
   }
 
   # A unified map of all custom DNS zones to create, combining both the ipv4 and dualstack zones.
-  # A custom DNS zone is created if the endpoint is centralized or if the privatelink `dns_zone` is explicitly provided.
-  # Each entry is keyed as "<endpoint_key>" for the ipv4 zone and "<endpoint_key>-dualstack" for the dualstack zone.
+  # An ipv4 custom DNS zone is created if the endpoint has a privatelink `dns_zone` explicitly provided or is a DynamoDB endpoint.
+  # A dualstack custom DNS zone is created only for DynamoDB endpoints.
   custom_dns_zones = merge(
     {
-      for key, endpoint in var.endpoints :
+      for key, zone_name in local.custom_ipv4_zones_names :
       key => {
         endpoint  = key
-        zone_name = local.custom_ipv4_zones_names[key]
-      } if endpoint.centralized_endpoint || try(endpoint.private_link_dns_options.dns_zone, null) != null
+        zone_name = zone_name
+      }
     },
     {
-      for key, endpoint in var.endpoints :
+      for key, zone_name in local.custom_dualstack_zones_names :
       "${key}-dualstack" => {
         endpoint  = key
-        zone_name = local.custom_dualstack_zones_names[key]
-      } if endpoint.centralized_endpoint && local.custom_dualstack_zones_names[key] != null
+        zone_name = zone_name
+      }
     }
   )
 
@@ -66,8 +70,8 @@ locals {
   custom_records = flatten([
     for key, endpoint in var.endpoints :
 
-    # 1) CENTRALIZED => If `centralized_endpoint = true` AND no custom dns_zone. Create alias apex + wildcard record.
-    endpoint.centralized_endpoint && try(endpoint.private_link_dns_options.dns_zone, null) == null ? [
+    # 1) CENTRALIZED DYNAMODB => If `centralized_endpoint = true` AND no custom dns_zone AND is a DynamoDB endpoint. Create alias apex + wildcard record.
+    endpoint.centralized_endpoint && try(endpoint.private_link_dns_options.dns_zone, null) == null && can(regex("dynamodb", local.real_service_names[key])) ? [
       {
         alias       = true
         endpoint    = key
@@ -190,7 +194,11 @@ resource "aws_route53_zone" "custom_zone" {
   force_destroy = false
   tags          = var.tags
 
-  # Prevent the deletion of associated VPCs after the initial creation.
+  vpc {
+    vpc_id = var.vpc_id
+  }
+
+  # Prevent the deletion of additional VPC associations managed outside this module.
   # See documentation on aws_route53_zone_association for details.
   lifecycle {
     ignore_changes = [vpc]
@@ -224,11 +232,7 @@ resource "aws_route53_record" "custom_dns_record" {
 ########################################################################
 
 resource "aws_route53profiles_resource_association" "custom_zone_association" {
-  for_each = {
-    for key, zone in local.custom_dns_zones :
-    key => zone if try(var.endpoints[zone.endpoint].private_link_dns_options.dns_zone, null) != null ||
-    can(regex("dynamodb", local.real_service_names[zone.endpoint]))
-  }
+  for_each = local.custom_dns_zones
 
   region       = var.region
   name         = substr(replace(aws_route53_zone.custom_zone[each.key].name, "/[^a-zA-Z0-9\\-_ ]/", "-"), 0, 64)
