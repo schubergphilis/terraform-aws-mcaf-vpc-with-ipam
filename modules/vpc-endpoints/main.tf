@@ -31,7 +31,7 @@ locals {
   custom_ipv4_zones_names = {
     for key, endpoint in var.endpoints :
     key => try(endpoint.private_link_dns_options.dns_zone, null) != null ? endpoint.private_link_dns_options.dns_zone : join(".", reverse(split(".", local.real_service_names[key])))
-    if try(endpoint.private_link_dns_options.dns_zone, null) != null || can(regex("dynamodb", local.real_service_names[key]))
+    if try(endpoint.private_link_dns_options.dns_zone, null) != null || (endpoint.type == "Interface" && endpoint.centralized_endpoint && can(regex("dynamodb", local.real_service_names[key])))
   }
 
   # Computes the dualstack DNS zone for each endpoint, derived from the service name.
@@ -43,7 +43,7 @@ locals {
       reverse(slice(split(".", local.real_service_names[key]), 2, length(split(".", local.real_service_names[key])))),
       ["api", "aws"]
     ))
-    if can(regex("dynamodb", local.real_service_names[key]))
+    if endpoint.type == "Interface" && endpoint.centralized_endpoint && can(regex("dynamodb", local.real_service_names[key]))
   }
 
   # A unified map of all custom DNS zones to create, combining both the ipv4 and dualstack zones.
