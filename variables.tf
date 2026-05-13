@@ -1,17 +1,3 @@
-variable "route53_profiles_association" {
-  type = object({
-    association_name = string
-    profile_id       = string
-  })
-  default     = null
-  description = "Variable to enable Route53 Profile association. Specify the 'profile_id' of a Route53 Profile in the account to associate with the VPC, and an arbitrary 'association_name'. Note: AWS only supports one Route53 Profile per VPC."
-
-  validation {
-    condition     = var.route53_profiles_association == null ? true : (can(regex("^[a-zA-Z0-9\\-_ ']+$", var.route53_profiles_association.association_name)) && !can(regex("^[0-9]+$", var.route53_profiles_association.association_name)))
-    error_message = "association_name must match (?!^[0-9]+$)([a-zA-Z0-9\\-_ ']+) (not purely numeric)."
-  }
-}
-
 variable "availability_zones" {
   type        = list(string)
   description = "A list of availability zones names or ids in the region."
@@ -20,33 +6,6 @@ variable "availability_zones" {
 variable "aws_vpc_ipam_pool" {
   type        = string
   description = "ID of the IPAM pool to get CIDRs from."
-}
-
-# s3_flow_logs_configuration.log_destination accepts full S3 ARNs, optionally including keys. Example:
-# "s3://{bucket_name}/{key_name}" will create a folder in the S3 bucket with the {key_name}
-variable "s3_flow_logs_configuration" {
-  type = object({
-    bucket_name              = optional(string)
-    kms_key_arn              = string
-    log_destination          = optional(string)
-    log_format               = optional(string)
-    max_aggregation_interval = optional(number, 60)
-    retention_in_days        = optional(number, 90)
-    traffic_type             = optional(string, "ALL")
-
-    destination_options = optional(object({
-      file_format                = optional(string)
-      hive_compatible_partitions = optional(bool, false)
-      per_hour_partition         = optional(bool, true)
-    }), {})
-  })
-  default     = null
-  description = "Variables to enable S3 flow logs for the VPC. Use 'bucket_name' to log to an S3 bucket created by this module. Alternatively, use 'log_destination' to specify a self-managed S3 bucket. The 'log_destination' variable accepts full S3 ARNs, optionally including object keys."
-
-  validation {
-    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.log_destination, null) != null || try(var.s3_flow_logs_configuration.bucket_name, null) != null)
-    error_message = "Either log_destination or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
-  }
 }
 
 variable "cloudwatch_flow_logs_configuration" {
@@ -101,6 +60,47 @@ variable "region" {
   description = "The AWS region where resources will be created; if omitted the default provider region is used"
 }
 
+variable "route53_profiles_association" {
+  type = object({
+    association_name = string
+    profile_id       = string
+  })
+  default     = null
+  description = "Variable to enable Route53 Profile association. Specify the 'profile_id' of a Route53 Profile in the account to associate with the VPC, and an arbitrary 'association_name'. Note: AWS only supports one Route53 Profile per VPC."
+
+  validation {
+    condition     = var.route53_profiles_association == null ? true : (can(regex("^[a-zA-Z0-9\\-_ ']+$", var.route53_profiles_association.association_name)) && !can(regex("^[0-9]+$", var.route53_profiles_association.association_name)))
+    error_message = "association_name must match (?!^[0-9]+$)([a-zA-Z0-9\\-_ ']+) (not purely numeric)."
+  }
+}
+
+# s3_flow_logs_configuration.log_destination accepts full S3 ARNs, optionally including keys. Example:
+# "s3://{bucket_name}/{key_name}" will create a folder in the S3 bucket with the {key_name}
+variable "s3_flow_logs_configuration" {
+  type = object({
+    bucket_name              = optional(string)
+    kms_key_arn              = string
+    log_destination          = optional(string)
+    log_format               = optional(string)
+    max_aggregation_interval = optional(number, 60)
+    retention_in_days        = optional(number, 90)
+    traffic_type             = optional(string, "ALL")
+
+    destination_options = optional(object({
+      file_format                = optional(string)
+      hive_compatible_partitions = optional(bool, false)
+      per_hour_partition         = optional(bool, true)
+    }), {})
+  })
+  default     = null
+  description = "Variables to enable S3 flow logs for the VPC. Use 'bucket_name' to log to an S3 bucket created by this module. Alternatively, use 'log_destination' to specify a self-managed S3 bucket. The 'log_destination' variable accepts full S3 ARNs, optionally including object keys."
+
+  validation {
+    condition     = var.s3_flow_logs_configuration == null || (try(var.s3_flow_logs_configuration.log_destination, null) != null || try(var.s3_flow_logs_configuration.bucket_name, null) != null)
+    error_message = "Either log_destination or bucket_name must be specified in s3_flow_logs_configuration if the configuration is provided."
+  }
+}
+
 variable "tags" {
   type        = map(string)
   default     = {}
@@ -141,4 +141,38 @@ variable "vpc_cidr_netmask" {
   type        = number
   default     = 20
   description = "The netmask length of the IPv4 CIDR you want to allocate to this VPC."
+}
+
+variable "vpc_endpoints" {
+  type = object({
+    endpoints = optional(map(object({
+      auto_accept          = optional(bool)
+      ip_address_type      = optional(string)
+      policy               = optional(string)
+      private_dns_enabled  = optional(bool, true)
+      centralized_endpoint = optional(bool, false)
+      security_group_ids   = optional(list(string), [])
+      service              = optional(string)
+      service_full_name    = optional(string)
+      service_region       = optional(string)
+      type                 = optional(string, "Interface")
+
+      dns_options = optional(object({
+        dns_record_ip_type                             = optional(string)
+        private_dns_only_for_inbound_resolver_endpoint = optional(bool)
+      }))
+
+      private_link_dns_options = optional(object({
+        dns_record_ttl  = optional(number, 300)
+        dns_record_type = optional(string, "CNAME")
+        dns_records     = optional(list(string), [])
+        dns_zone        = string
+      }))
+    })), {})
+
+    security_group_ids = optional(list(string), [])
+  })
+
+  default     = null
+  description = "Configuration for VPC endpoints. When provided, the vpc-endpoints submodule is invoked automatically with the VPC ID, region, and Route53 profile ID derived from the root module. Gateway endpoints will automatically use the private subnet route table IDs, and Interface/GatewayLoadBalancer endpoints will automatically use the private subnet IDs."
 }

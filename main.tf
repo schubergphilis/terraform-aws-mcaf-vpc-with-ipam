@@ -225,3 +225,50 @@ resource "aws_route53profiles_association" "default" {
 
   tags = var.tags
 }
+
+################################################################################
+# VPC Endpoints
+################################################################################
+
+module "vpc_endpoints" {
+  source = "./modules/vpc-endpoints"
+
+  count = var.vpc_endpoints != null ? 1 : 0
+
+  region             = var.region
+  route53_profile_id = anytrue([for endpoint in values(var.vpc_endpoints.endpoints) : endpoint.centralized_endpoint]) && var.route53_profiles_association != null ? var.route53_profiles_association.profile_id : null
+  security_group_ids = length(var.vpc_endpoints.security_group_ids) > 0 ? var.vpc_endpoints.security_group_ids : [aws_security_group.vpc_endpoints[0].id]
+  tags               = var.tags
+  vpc_id             = aws_vpc.default.id
+
+  endpoints = {
+    for key, endpoint in var.vpc_endpoints.endpoints :
+    key => merge(endpoint, {
+      route_table_ids = endpoint.type == "Gateway" ? flatten([for network in var.networks : [for az in var.availability_zones : aws_route_table.default["${network.name}_${az}"].id] if !network.public]) : null
+      subnet_ids      = contains(["Interface", "GatewayLoadBalancer"], endpoint.type) ? flatten([for network in var.networks : [for az in var.availability_zones : aws_subnet.default["${network.name}_${az}"].id] if !network.public]) : []
+    })
+  }
+}
+
+resource "aws_security_group" "vpc_endpoints" {
+  count = var.vpc_endpoints != null && length(var.vpc_endpoints.security_group_ids) == 0 ? 1 : 0
+
+  region      = var.region
+  description = "VPC Endpoint Security Group"
+  name_prefix = "vpc-endpoints-"
+  vpc_id      = aws_vpc.default.id
+
+  tags = merge({ "Name" = "vpc-endpoints" }, var.tags)
+}
+
+resource "aws_vpc_security_group_ingress_rule" "vpc_endpoints" {
+  count = var.vpc_endpoints != null && length(var.vpc_endpoints.security_group_ids) == 0 ? 1 : 0
+
+  region            = var.region
+  security_group_id = aws_security_group.vpc_endpoints[0].id
+  cidr_ipv4         = aws_vpc.default.cidr_block
+  description       = "Allow HTTPS access from VPC CIDR block"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+}
