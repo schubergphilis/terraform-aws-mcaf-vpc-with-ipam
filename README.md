@@ -33,6 +33,7 @@ This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_log_bucket"></a> [log\_bucket](#module\_log\_bucket) | schubergphilis/mcaf-s3/aws | ~> 2.0.0 |
+| <a name="module_vpc_endpoints"></a> [vpc\_endpoints](#module\_vpc\_endpoints) | ./modules/vpc-endpoints | n/a |
 
 ## Resources
 
@@ -58,9 +59,11 @@ This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/
 | [aws_route53profiles_association.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53profiles_association) | resource |
 | [aws_route_table.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table) | resource |
 | [aws_route_table_association.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association) | resource |
+| [aws_security_group.vpc_endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_subnet.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/subnet) | resource |
 | [aws_vpc.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc) | resource |
 | [aws_vpc_ipam_preview_next_cidr.vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_ipam_preview_next_cidr) | resource |
+| [aws_vpc_security_group_ingress_rule.vpc_endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_caller_identity.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.vpc_flow_log](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.vpc_flow_logs_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -87,6 +90,7 @@ This module will be merged with the [terraform-aws-mcaf-vpc](https://github.com/
 | <a name="input_transit_gateway_route_table_association"></a> [transit\_gateway\_route\_table\_association](#input\_transit\_gateway\_route\_table\_association) | Transit Gateway route table ID to attach the VPC on. | `string` | `""` | no |
 | <a name="input_transit_gateway_route_table_propagation"></a> [transit\_gateway\_route\_table\_propagation](#input\_transit\_gateway\_route\_table\_propagation) | Map of [logical name]→[Transit Gateway route table ID] to propagate the VPC CIDR to. | `map(string)` | `{}` | no |
 | <a name="input_vpc_cidr_netmask"></a> [vpc\_cidr\_netmask](#input\_vpc\_cidr\_netmask) | The netmask length of the IPv4 CIDR you want to allocate to this VPC. | `number` | `20` | no |
+| <a name="input_vpc_endpoints"></a> [vpc\_endpoints](#input\_vpc\_endpoints) | Configuration for VPC endpoints. When provided, the vpc-endpoints submodule is invoked automatically with the VPC ID, region, and Route53 profile ID derived from the root module. Gateway endpoints will automatically use the private subnet route table IDs, and Interface/GatewayLoadBalancer endpoints will automatically use the private subnet IDs. | <pre>object({<br/>    endpoints = optional(map(object({<br/>      auto_accept          = optional(bool)<br/>      ip_address_type      = optional(string)<br/>      policy               = optional(string)<br/>      private_dns_enabled  = optional(bool, true)<br/>      centralized_endpoint = optional(bool, false)<br/>      security_group_ids   = optional(list(string), [])<br/>      service              = optional(string)<br/>      service_full_name    = optional(string)<br/>      service_region       = optional(string)<br/>      type                 = optional(string, "Interface")<br/><br/>      dns_options = optional(object({<br/>        dns_record_ip_type                             = optional(string)<br/>        private_dns_only_for_inbound_resolver_endpoint = optional(bool)<br/>      }))<br/><br/>      private_link_dns_options = optional(object({<br/>        dns_record_ttl  = optional(number, 300)<br/>        dns_record_type = optional(string, "CNAME")<br/>        dns_records     = optional(list(string), [])<br/>        dns_zone        = string<br/>      }))<br/>    })), {})<br/><br/>    security_group_ids = optional(list(string), [])<br/>  })</pre> | `null` | no |
 
 ## Outputs
 
