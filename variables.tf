@@ -151,7 +151,6 @@ variable "vpc_endpoints" {
       policy               = optional(string)
       private_dns_enabled  = optional(bool, true)
       centralized_endpoint = optional(bool, false)
-      security_group_ids   = optional(list(string), [])
       service              = optional(string)
       service_full_name    = optional(string)
       service_region       = optional(string)
@@ -169,10 +168,8 @@ variable "vpc_endpoints" {
         dns_zone        = string
       }))
     })), {})
-
-    security_group_ids = optional(list(string), [])
   })
 
   default     = null
-  description = "Configuration for VPC endpoints. When provided, the vpc-endpoints submodule is invoked automatically with the VPC ID, region, and Route53 profile ID derived from the root module. Gateway endpoints will automatically use the private subnet route table IDs, and Interface/GatewayLoadBalancer endpoints will automatically use the private subnet IDs."
+  description = "Configuration for VPC endpoints. When provided, the vpc-endpoints submodule is invoked automatically with the VPC ID, region, and Route53 profile ID derived from the root module. A default security group is automatically created and associated with Interface endpoints, allowing ingress traffic on port 443 from the VPC CIDR block. Gateway endpoints will automatically use the private subnet route table IDs, and Interface/GatewayLoadBalancer endpoints will automatically use the private subnet IDs."
 }

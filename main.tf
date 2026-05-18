@@ -237,7 +237,7 @@ module "vpc_endpoints" {
 
   region             = var.region
   route53_profile_id = anytrue([for endpoint in values(var.vpc_endpoints.endpoints) : endpoint.centralized_endpoint]) && var.route53_profiles_association != null ? var.route53_profiles_association.profile_id : null
-  security_group_ids = length(var.vpc_endpoints.security_group_ids) > 0 ? var.vpc_endpoints.security_group_ids : [aws_security_group.vpc_endpoints[0].id]
+  security_group_ids = length(aws_security_group.vpc_endpoints) > 0 ? [aws_security_group.vpc_endpoints[0].id] : []
   tags               = var.tags
   vpc_id             = aws_vpc.default.id
 
@@ -251,7 +251,8 @@ module "vpc_endpoints" {
 }
 
 resource "aws_security_group" "vpc_endpoints" {
-  count = var.vpc_endpoints != null && length(var.vpc_endpoints.security_group_ids) == 0 ? 1 : 0
+  #checkov:skip=CKV2_AWS_5: "Security group is attached to VPC endpoints via the vpc-endpoints submodule"
+  count = var.vpc_endpoints != null && anytrue([for e in var.vpc_endpoints.endpoints : e.type == "Interface"]) ? 1 : 0
 
   region      = var.region
   description = "VPC Endpoint Security Group"
@@ -262,7 +263,7 @@ resource "aws_security_group" "vpc_endpoints" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "vpc_endpoints" {
-  count = var.vpc_endpoints != null && length(var.vpc_endpoints.security_group_ids) == 0 ? 1 : 0
+  count = var.vpc_endpoints != null && anytrue([for e in var.vpc_endpoints.endpoints : e.type == "Interface"]) ? 1 : 0
 
   region            = var.region
   security_group_id = aws_security_group.vpc_endpoints[0].id
